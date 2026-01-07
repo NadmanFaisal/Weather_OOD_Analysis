@@ -50,3 +50,7 @@ hf download nvidia/PhysicalAI-Autonomous-Vehicles \
   --include "radar/radar_corner_front_left_srr_0/*chunk_0001*" \
   --local-dir ./nvidia_dataset_raw
 ```
+
+```
+pip install physical_ai_av
+```
