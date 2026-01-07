@@ -50,7 +50,7 @@ class NvidiaDatasetExtractor:
                         results[cam_name] = False
                         continue
 
-                    for video_name in tqdm(mp4_files, desc=f"   📷 {cam_name}", leave=False):
+                    for video_name in tqdm(mp4_files, desc=f"   {cam_name}", leave=False):
                         self._process_single_video(z, video_name, chunk_output_dir, interval, max_frames)
                 
                 results[cam_name] = True

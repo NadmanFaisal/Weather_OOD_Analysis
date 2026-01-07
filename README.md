@@ -50,3 +50,20 @@ hf download nvidia/PhysicalAI-Autonomous-Vehicles \
   --include "radar/radar_corner_front_left_srr_0/*chunk_0001*" \
   --local-dir ./nvidia_dataset_raw
 ```
+
+## Setting Up the Den Environment:
+
+Paste the following command from the root directory of the project:
+
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Working With this Analyzer:
+
+### Run the following command to extract frames from each videos:
+```
+python extract_data.py
+```
