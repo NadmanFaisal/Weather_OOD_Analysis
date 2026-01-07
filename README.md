@@ -22,7 +22,7 @@ The data will be stored in `nvidia_dataset_raw` directory within your working di
 ```
 hf download nvidia/PhysicalAI-Autonomous-Vehicles \
   --repo-type dataset \
-  --include "camera/camera_front_wide_120fov/*chunk_0001*" \
+  --include "camera/*chunk_0001*" \
   --local-dir ./nvidia_dataset_raw
 
 hf download nvidia/PhysicalAI-Autonomous-Vehicles \
@@ -49,8 +49,4 @@ hf download nvidia/PhysicalAI-Autonomous-Vehicles \
   --repo-type dataset \
   --include "radar/radar_corner_front_left_srr_0/*chunk_0001*" \
   --local-dir ./nvidia_dataset_raw
-```
-
-```
-pip install physical_ai_av
 ```

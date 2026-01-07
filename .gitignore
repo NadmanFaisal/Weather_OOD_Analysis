@@ -1,1 +1,3 @@
 nvidia_dataset_raw/*
+dataset_processed/*
+*__pycache__/*
