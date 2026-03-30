@@ -9,3 +9,4 @@
 *.tgz
 *.gz
 *.zip
+.DS_Store
