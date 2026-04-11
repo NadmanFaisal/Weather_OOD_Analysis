@@ -1,8 +1,21 @@
+# src: https://github.com/li-xl/nuscenes-download
+
+"""
+Artifact: 
+nuScenes Data Ingestion & Integrity Pipeline
+Methodology: Design Science Research (Cycle II: Solution Design)
+Researcher(s): Hasan Zahid, Nadman Abdullah Bin Faisal, Vaibhav Puram
+
+Purpose:
+This utility handles authenticated data collection from the nuScenes API.
+It ensures the environment is downloaded and extracted correctly for post-hoc 
+OOD analysis on BEVFormer and BEVFusion architectures.
+"""
+
 import os
 import requests
 import hashlib
 import tarfile
-import gzip
 import json
 
 from dotenv import load_dotenv
@@ -43,14 +56,14 @@ def login(username, password):
     )
 
     if response.status_code == 200:
-        print("Logged in!")
+        print("\tLogged in!")
         try:
             token = json.loads(response.content)["AuthenticationResult"]["IdToken"]
             return token
         except KeyError:
-            print("Authentication failed. 'AuthenticationResult' not found in the response.")
+            print("\tAuthentication failed. 'AuthenticationResult' not found in the response.")
     else:
-        print("Failed to login. Status code:", response.status_code)
+        print("\tFailed to login. Status code:", response.status_code)
 
     return None
 
@@ -62,11 +75,11 @@ def download_files(url, save_file, md5):
         if content_type == 'application/x-tar':
             save_file = save_file.replace('.tgz', '.tar')
         elif content_type != 'application/octet-stream':
-            print("Unknown content type: ", content_type)
+            print("\tUnknown content type: ", content_type)
             return save_file
 
     if os.path.exists(save_file):
-        print(save_file, " has been downloaded!")
+        print("\t", save_file, " has been downloaded!")
 
         md5obj = hashlib.md5()
         with open(save_file, 'rb') as file:
@@ -74,9 +87,9 @@ def download_files(url, save_file, md5):
                 md5obj.update(chunk)
         hash = md5obj.hexdigest()
         if hash != md5:
-            print(save_file,"check md5 failed,download again")
+            print(f"\t{save_file} check md5 failed, downloading again.")
         else:
-            print(save_file,"check md5 success")
+            print(f"\t{save_file} check md5 success")
             return save_file
 
     file_size = int(response.headers.get('Content-Length', 0))
@@ -94,42 +107,60 @@ def download_files(url, save_file, md5):
 
     hash = md5obj.hexdigest()
     if hash != md5:
-        print(save_file,"check md5 failed")
+        print(save_file,"\tcheck md5 failed")
     else:
-        print(save_file,"check md5 success")
+        print(save_file,"\tcheck md5 success")
 
     return save_file
 
-def main():
-    print("Loginging...")
+def extract_archive(file_path):
+    """
+    Unpacks .tar/.tgz files into the designated dataroot.
+    Adheres to the specific directory structure required by 
+    the nuScenes-devkit.
+    """
+    original_folder = os.path.dirname(file_path)
+    print(f"\tExtracting {file_path} to {original_folder}")
 
+    try:
+        with tarfile.open(file_path, 'r:*') as tar:
+            tar.extractall(path=original_folder)
+        print("\tExtraction successful.")
+    except Exception as e:
+        print(f"\tExtraction failed: {e}")
+
+def main():
+
+    # Authentication...
+    print("Loginging...")
     bearer_token = login(username, password)
     headers = {
         'Authorization': f'Bearer {bearer_token}',
         'Content-Type': 'application/json',
     }
 
+    # Checks whether the output directory exists
     if not os.path.exists(output_dir):
-        print(f"ERROR: The directory '{output_dir}' was not found.")
+        print(f"\tERROR: The directory '{output_dir}' was not found.")
         print("Please create the folder structure manually within the repo.")
         return
 
     print("Getting download urls...")
     
+    # Downloads data for the specified files
     download_data = {}
-
-    for filename,md5 in files.items():
+    for filename, md5 in files.items():
         api_url = f'https://o9k5xn5546.execute-api.us-east-1.amazonaws.com/v1/archives/v1.0/{filename}?region={region}&project=nuScenes'
 
         response = requests.get(api_url, headers=headers)
 
         if response.status_code == 200:
-            print(filename,'request success')
+            print(f"\t{filename} request success")
             download_url = response.json()['url']
             download_data[filename] = [download_url,os.path.join(output_dir,filename),md5]
         else:
-            print(f'request failed : {response.status_code}')
-            print(response.text)
+            print(f'\trequest failed : {response.status_code}')
+            print(f"\t{response.text}")
 
     print("Downloading files...")
 
@@ -137,6 +168,11 @@ def main():
     for output_name,(download_url,save_file,md5) in download_data.items():
         save_file = download_files(download_url,save_file,md5)
         download_data[output_name] = [download_url,save_file,md5]
+
+    # Extracts the .tar/.tgz files into the designated folder
+    print("Extracting files...")
+    for output_name,(download_url,save_file,md5) in download_data.items():
+        extract_archive(save_file)
 
 if __name__ == "__main__":
     main()
