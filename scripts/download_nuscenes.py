@@ -1,5 +1,4 @@
 # src: https://github.com/li-xl/nuscenes-download
-
 """
 Artifact: 
 nuScenes Data Ingestion & Integrity Pipeline
@@ -13,6 +12,7 @@ OOD analysis on BEVFormer and BEVFusion architectures.
 """
 
 import os
+import sys
 import requests
 import hashlib
 import tarfile
@@ -21,17 +21,19 @@ import json
 from dotenv import load_dotenv
 from tqdm import tqdm
 
+# Gets the project directory's name
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from constants import OUTPUT_DIR, REGION, FILES
+
 load_dotenv()
 
 username = os.getenv('NUSCENES_USERNAME')
 password = os.getenv('NUSCENES_PASSWORD')
 
-output_dir = "data/sets/nuscenes/"
-region = 'us'
-
-files = {
-    "v1.0-test_meta.tgz":"b0263f5c41b780a5a10ede2da99539eb",
-}
+output_dir = OUTPUT_DIR
+region = REGION
+files = FILES
 
 def login(username, password):
     headers = {
