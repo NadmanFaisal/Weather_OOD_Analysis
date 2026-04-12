@@ -11,3 +11,6 @@
 *.gz
 *.zip
 .DS_Store
+
+# Perception Models
+core_models/BEVFormer
