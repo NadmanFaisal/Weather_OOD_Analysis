@@ -1,9 +1,10 @@
 # src: https://github.com/li-xl/nuscenes-download
 """
+Researcher(s): Hasan Zahid, Nadman Abdullah Bin Faisal, Vaibhav Puram
+
 Artifact: 
 nuScenes Data Ingestion & Integrity Pipeline
 Methodology: Design Science Research (Cycle II: Solution Design)
-Researcher(s): Hasan Zahid, Nadman Abdullah Bin Faisal, Vaibhav Puram
 
 Purpose:
 This utility handles authenticated data collection from the nuScenes API.
@@ -31,9 +32,6 @@ load_dotenv()
 username = os.getenv('NUSCENES_USERNAME')
 password = os.getenv('NUSCENES_PASSWORD')
 
-output_dir = OUTPUT_DIR
-region = REGION
-files = FILES
 
 def login(username, password):
     headers = {
@@ -83,6 +81,7 @@ def download_files(url, save_file, md5):
     if os.path.exists(save_file):
         print("\t", save_file, " has been downloaded!")
 
+        # MD5 checksum performed to check the integrity of the data
         md5obj = hashlib.md5()
         with open(save_file, 'rb') as file:
             for chunk in file:
@@ -133,40 +132,42 @@ def extract_archive(file_path):
 
 def main():
 
+    # Checks whether the output directory exists
+    if not os.path.exists(OUTPUT_DIR):
+        print(f"\tThe directory '{OUTPUT_DIR}' was not found.")
+
+        # Makes the directory if it does not exist
+        os.makedirs(OUTPUT_DIR,exist_ok=True)
+        print("\tOutput directory made.")
+
+
     # Authentication...
-    print("Loginging...")
+    print("Logging in...")
     bearer_token = login(username, password)
     headers = {
         'Authorization': f'Bearer {bearer_token}',
         'Content-Type': 'application/json',
     }
 
-    # Checks whether the output directory exists
-    if not os.path.exists(output_dir):
-        print(f"\tERROR: The directory '{output_dir}' was not found.")
-        print("Please create the folder structure manually within the repo.")
-        return
-
     print("Getting download urls...")
     
     # Downloads data for the specified files
     download_data = {}
-    for filename, md5 in files.items():
-        api_url = f'https://o9k5xn5546.execute-api.us-east-1.amazonaws.com/v1/archives/v1.0/{filename}?region={region}&project=nuScenes'
+    for filename, md5 in FILES.items():
+        api_url = f'https://o9k5xn5546.execute-api.us-east-1.amazonaws.com/v1/archives/v1.0/{filename}?region={REGION}&project=nuScenes'
 
         response = requests.get(api_url, headers=headers)
 
         if response.status_code == 200:
             print(f"\t{filename} request success")
             download_url = response.json()['url']
-            download_data[filename] = [download_url,os.path.join(output_dir,filename),md5]
+            download_data[filename] = [download_url,os.path.join(OUTPUT_DIR,filename),md5]
         else:
             print(f'\trequest failed : {response.status_code}')
             print(f"\t{response.text}")
 
     print("Downloading files...")
 
-    os.makedirs(output_dir,exist_ok=True)
     for output_name,(download_url,save_file,md5) in download_data.items():
         save_file = download_files(download_url,save_file,md5)
         download_data[output_name] = [download_url,save_file,md5]

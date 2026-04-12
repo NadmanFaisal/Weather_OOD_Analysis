@@ -24,9 +24,9 @@ pip install -r requirements.txt
 ```
 
 ## Download NUSCENES Data
-To download the nuScenes data into the proper designated folder, you need to make the expected directory first. Run the following command from the root:
+The nuScenes data will be downloaded into the proper designated folder:
 ```
-mkdir -p data/sets/nuscenes
+data/sets/nuscenes/
 ```
 To download the nuScenes data, you need to run the `scripts/download_nuscenes.py` file.
 
@@ -40,4 +40,9 @@ Also, populate the `constants.py` file in the root with relevant data. More inst
 Run the following command from the root:
 ```
 python scripts/download_nuscenes.py
+```
+[!IMPORTANT]
+MD5 Integrity Troubleshooting > If the script reports an MD5 checksum mismatch, the file is likely corrupted or incomplete. To manually verify the file's hash and compare it against the value in constants.py, run:
+```
+md5sum data/sets/nuscenes/FILENAME
 ```
