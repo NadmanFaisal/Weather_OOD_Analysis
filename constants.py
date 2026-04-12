@@ -9,8 +9,8 @@ FILES = {
     # Define the blobs
     "v1.0-mini.tgz":"dc2267f6e62b221efb9575929028603b",
     #"v1.0-test_blobs.tgz":"e065445b6019ecc15c70ad9d99c47b33",
-    "v1.0-trainval01_blobs.tgz":"cbf32d2ea6996fc599b32f724e7ce8f2",
-    "v1.0-trainval02_blobs.tgz":"aeecea4878ec3831d316b382bb2f72da",
+    #"v1.0-trainval01_blobs.tgz":"cbf32d2ea6996fc599b32f724e7ce8f2",
+    #"v1.0-trainval02_blobs.tgz":"aeecea4878ec3831d316b382bb2f72da",
     #"v1.0-trainval03_blobs.tgz":"595c29528351060f94c935e3aaf7b995",
     #"v1.0-trainval04_blobs.tgz":"b55eae9b4aa786b478858a3fc92fb72d",
     #"v1.0-trainval05_blobs.tgz":"1c815ed607a11be7446dcd4ba0e71ed0",
