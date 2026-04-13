@@ -89,7 +89,11 @@ cd mmdetection3d
 git checkout v0.17.1
 python setup.py install
 cd ../../
+```
+> [!NOTE]
+> If the host system lacks a compatible NVIDIA GPU or the necessary CUDA drivers, the installation or runtime may report `CUDA Error` or `Environment errors`. For the purposes of Perception Layer Analysis and OOD Monitoring logic, these errors can be treated as warnings, they prefer to run the perception layers on the CPU instead. In that case, the core Python logic and data processing modules will remain functional and can be executed on the CPU.
 
+```bash
 pip install einops fvcore seaborn iopath==0.1.9 timm==0.6.13  typing-extensions==4.5.0 pylint ipython==8.12  numpy==1.19.5 matplotlib==3.5.2 numba==0.48.0 pandas==1.4.4 scikit-image==0.19.3 setuptools==59.5.0
 python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 ```
