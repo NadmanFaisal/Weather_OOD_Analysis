@@ -59,9 +59,8 @@ md5sum data/sets/nuscenes/FILENAME
 
 ## Clone BEVFormer
 
+From the root, run:
 ```bash
-cd Weather_OOD_Analysis
-
 git clone https://github.com/fundamentalvision/BEVFormer.git core_models/BEVFormer
 ```
 
@@ -89,25 +88,27 @@ git clone https://github.com/open-mmlab/mmdetection3d.git
 cd mmdetection3d
 git checkout v0.17.1
 python setup.py install
-cd ~/path/to/Weather_OOD_Analysis
+cd ../../
 
 pip install einops fvcore seaborn iopath==0.1.9 timm==0.6.13  typing-extensions==4.5.0 pylint ipython==8.12  numpy==1.19.5 matplotlib==3.5.2 numba==0.48.0 pandas==1.4.4 scikit-image==0.19.3 setuptools==59.5.0
 python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 ```
+> [!NOTE]
+> The `detectron2` installation may fail if the host system lacks a compatible NVIDIA GPU or the necessary CUDA drivers.
 
 ## Download Pre-trained Weights
 
 All weights are stored in the project-level `checkpoints/` folder. BEVFormer accesses them via a symlink.
 
+From the root, run:
 ```bash
-cd Weather_OOD_Analysis
-
 # Download weights to the project checkpoints folder
 wget -P checkpoints/ https://github.com/zhiqi-li/storage/releases/download/v1.0/bevformer_tiny_epoch_24.pth
 
 # Symlink BEVFormer's ckpts directory to project checkpoints
 cd core_models/BEVFormer
 ln -sv ../../checkpoints ckpts
+cd ../../
 ```
 
 ## Prepare Data for BEVFormer (Symlink Strategy)
@@ -120,6 +121,7 @@ BEVFormer expects data at `BEVFormer/data/nuscenes/`, but our project stores it 
 cd core_models/BEVFormer
 mkdir -p data
 ln -sv ../../../data/sets/nuscenes data/nuscenes
+cd ../../
 ```
 
 
@@ -163,6 +165,7 @@ data/nuscenes/
 
 ### Single-GPU Evaluation
 
+From the root, run:
 ```bash
 cd core_models/BEVFormer
 conda activate bevformer
