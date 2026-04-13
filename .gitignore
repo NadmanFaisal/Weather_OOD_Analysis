@@ -2,6 +2,7 @@
 *__pycache__
 *.venv/
 *.env
+*.deb
 
 # Datasets
 /data/
@@ -11,6 +12,7 @@
 *.gz
 *.zip
 .DS_Store
+/checkpoints/*.pth
 
 # Perception Models
 core_models/BEVFormer
