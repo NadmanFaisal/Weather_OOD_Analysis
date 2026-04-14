@@ -51,7 +51,7 @@ Run the following command from the root:
 ```
 python scripts/download_nuscenes.py
 ```
-[!IMPORTANT]
+> [!IMPORTANT]
 MD5 Integrity Troubleshooting > If the script reports an MD5 checksum mismatch, the file is likely corrupted or incomplete. To manually verify the file's hash and compare it against the value in constants.py, run:
 ```
 md5sum data/sets/nuscenes/FILENAME
@@ -135,7 +135,9 @@ BEVFormer requires CAN bus sensor data from nuScenes:
 
 1. Go to https://www.nuscenes.org/download
 2. Download **`can_bus.zip`** (under "CAN bus expansion")
+3. Place the zip file in the root
 3. Extract it into BEVFormer's data directory:
+4. (Optional) You can delete the `can_bus.zip` from the root.
 
 ```bash
 unzip can_bus.zip -d core_models/BEVFormer/data/
@@ -146,19 +148,20 @@ unzip can_bus.zip -d core_models/BEVFormer/data/
 BEVFormer uses **custom temporal annotation pickle files** (different from standard mmdet3d). Generate them before running inference:
 
 ```bash
-cd core_models/BEVFormer
 conda activate bevformer
+cd core_models/BEVFormer
 
-# For full dataset (v1.0):
+# For mini dataset (v1.0):
 python tools/create_data.py nuscenes \
     --root-path ./data/nuscenes \
     --out-dir ./data/nuscenes \
     --extra-tag nuscenes \
-    --version  v1.0-mini \ #change version according to dataset
+    --version  v1.0-mini \
     --canbus ./data
 ```
-
-This generates:
+> [!NOTE]
+Change the `--version` flag to `'v1.0-trainval'` if using the full dataset
+Depending on the version used, this generates index files in your `core_models/BEVFormer/data/nuscenes/` directory, such as:
 ```
 data/nuscenes/
 ├── nuscenes_infos_temporal_train.pkl
@@ -173,7 +176,10 @@ From the root, run:
 ```bash
 cd core_models/BEVFormer
 conda activate bevformer
-
+```
+Depending on which dataset you use, you need to go to `core_models/BEVFormer/projects/configs/bevformer/[whichever_model_you_want_to_train]`.
+Navigate to the dictionary at line 197 and change the fields for `ann_file=data_root + 'nuscenes_infos_temporal_train.pkl'` to the respective pkl files generated in the above steps.
+```bash
 # BEVFormer Tiny
 python tools/test.py \
     projects/configs/bevformer/bevformer_tiny.py \
