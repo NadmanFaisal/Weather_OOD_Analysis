@@ -128,7 +128,6 @@ ln -sv ../../../data/sets/nuscenes data/nuscenes
 cd ../../
 ```
 
-
 ### Download CAN Bus Expansion Data
 
 BEVFormer requires CAN bus sensor data from nuScenes:
@@ -160,14 +159,18 @@ python tools/create_data.py nuscenes \
     --canbus ./data
 ```
 > [!NOTE]
-Change the `--version` flag to `'v1.0-trainval'` if using the full dataset
-Depending on the version used, this generates index files in your `core_models/BEVFormer/data/nuscenes/` directory, such as:
+Change the `--version` flag to `'v1.0-trainval'` if using the full dataset. Depending on the version used, this generates index files in your `core_models/BEVFormer/data/nuscenes/` directory, such as:
 ```
 data/nuscenes/
 ├── nuscenes_infos_temporal_train.pkl
 └── nuscenes_infos_temporal_val.pkl
 ```
-
+Or:
+```
+data/nuscenes/
+├── nuscenes_infos_mini_train.pkl
+└── nuscenes_infos_mini_val.pkl
+```
 ## Run BEVFormer (Inference / Evaluation)
 
 ### Single-GPU Evaluation
@@ -178,15 +181,17 @@ cd core_models/BEVFormer
 conda activate bevformer
 ```
 Depending on which dataset you use, you need to go to `core_models/BEVFormer/projects/configs/bevformer/[whichever_model_you_want_to_train]`.
-Navigate to the dictionary at line 197 and change the fields for `ann_file=data_root + 'nuscenes_infos_temporal_train.pkl'` to the respective pkl files generated in the above steps.
+Navigate to the dictionary at line 197 and change the fields for `ann_file=data_root + 'nuscenes_infos_temporal_train.pkl'` to the respective `.pkl` files generated in the above steps.
+
+To run BEVFormer Tiny model:
 ```bash
-# BEVFormer Tiny
 python tools/test.py \
     projects/configs/bevformer/bevformer_tiny.py \
     ckpts/bevformer_tiny_epoch_24.pth \
     --eval bbox
-
-# BEVFormer Base
+```
+To run BEVFormer Base version:
+```bash
 python tools/test.py \
     projects/configs/bevformer/bevformer_base.py \
     ckpts/bevformer_r101_dcn_24ep.pth \
@@ -194,14 +199,15 @@ python tools/test.py \
 ```
 
 ### Multi-GPU Evaluation (Cluster)
-
+To run BEVFormer Tiny with 8 GPUs
 ```bash
-# BEVFormer Tiny with 8 GPUs
 ./tools/dist_test.sh \
     projects/configs/bevformer/bevformer_tiny.py \
     ckpts/bevformer_tiny_epoch_24.pth \
     8
-
+```
+To run BEVFormer Base with 8 GPUs
+```bash
 # BEVFormer Base with 8 GPUs
 ./tools/dist_test.sh \
     projects/configs/bevformer/bevformer_base.py \
