@@ -106,8 +106,19 @@ All weights are stored in the project-level `checkpoints/` folder. BEVFormer acc
 
 From the root, run:
 ```bash
-# Download weights to the project checkpoints folder
-wget -P checkpoints/ https://github.com/zhiqi-li/storage/releases/download/v1.0/bevformer_tiny_epoch_24.pth
+# Run the download script from the repo root (Weather_OOD_Analysis):
+python scripts/download_weights.py
+
+# You should see an output like this: 
+=== BEVFormer Weights ===
+  [OK]  BEVFormer main checkpoint (r101, 24ep)
+  [OK]  BEVFormer backbone pretrain (ResNet-101 DCN)
+
+=== BEVFusion Weights ===
+  [OK]  BEVFusion det checkpoint (official mit-han-lab Dropbox)
+  [OK]  BEVFusion Swin-T backbone pretrain
+
+All weights downloaded successfully. ✓
 
 # Symlink BEVFormer's ckpts directory to project checkpoints
 cd core_models/BEVFormer
