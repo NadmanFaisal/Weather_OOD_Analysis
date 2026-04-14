@@ -1,21 +1,40 @@
 """
-Artifact: 
+Artifact:
 nuScenes Data Ingestion & Integrity Pipeline
 Methodology: Design Science Research (Cycle II: Solution Design)
 Researcher(s): Hasan Zahid, Nadman Abdullah Bin Faisal, Vaibhav Puram
-
+ 
 download_weights.py
 ===================
 Purpose: Downloads pretrained weights for BEVFormer and BEVFusion.
-
+ 
 Usage:
     python scripts/download_weights.py
-
+ 
 Works on macOS (Apple Silicon), Linux, and Windows.
 Requires only Python standard library — no pip installs needed.
-
+ 
 Output directory is auto-detected: uses checkpoints/ if it exists,
 otherwise falls back to weights/. Created automatically if neither exists.
+ 
+---------------------------------------------------------------------------
+Weight Sources
+---------------------------------------------------------------------------
+BEVFormer (Li et al., ECCV 2022 — https://arxiv.org/abs/2203.17270)
+  Repo   : https://github.com/fundamentalvision/BEVFormer
+  Weights: https://github.com/zhiqi-li/storage/releases/tag/v1.0
+    - bevformer_r101_dcn_24ep.pth   : main nuScenes detection checkpoint
+    - r101_dcn_fcos3d_pretrain.pth  : ResNet-101 backbone initialisation
+ 
+BEVFusion (Liu et al., ICRA 2023 — https://arxiv.org/abs/2205.13542)
+  Repo   : https://github.com/mit-han-lab/bevfusion (archived Jan 2025)
+  Weights:
+    - bevfusion-det.pth             : camera+LiDAR detection checkpoint
+                                      (68.52 mAP / 71.38 NDS on nuScenes val)
+                                      hosted on official Dropbox in README
+    - swint-nuimages-pretrained.pth : Swin-T backbone (Liu et al., ICCV 2021)
+                                      https://github.com/SwinTransformer/storage
+---------------------------------------------------------------------------
 """
 
 import os
