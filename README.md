@@ -155,7 +155,7 @@ All weights downloaded successfully. ✓
 
 # Symlink BEVFormer's ckpts directory to project checkpoints
 cd core_models/BEVFormer
-ln -sv ../../checkpoints ckpts
+ln -sv ../../checkpoints/bevformer ckpts
 cd ../../
 ```
 
