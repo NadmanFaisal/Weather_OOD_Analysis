@@ -364,7 +364,6 @@ Or:
 data/nuscenes/
 ├── nuscenes_infos_mini_train.pkl
 └── nuscenes_infos_mini_val.pkl
-```bash
 ```
 After these, run the following command to create a mix of 50 corrupted data and 50 clean data:
 ```bash
@@ -373,7 +372,7 @@ python scripts/create_mixed_data.py
 This will generate corruption data as follows:
 ```
 data/sets/nuscenes_combined/
-├── ..._MIXED_.pkl
+└── ..._MIXED_.pkl
 ```
 
 Now to feed the mixed dataset to the `bevformer_tiny` model, you will have to navigate to `core_models/BEVFormer/project/bevformer/bevformer_tiny`, and paste the following from line 172 - 239:
