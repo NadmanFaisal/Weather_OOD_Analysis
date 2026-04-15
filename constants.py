@@ -57,3 +57,8 @@ WEIGHTS = {
         "label": "BEVFusion Swin-T backbone pretrain",
     },
 }
+
+# PKL files
+CLEAN_PKL = 'data/sets/nuscenes/nuscenes_infos_temporal_val.pkl'
+CORRUPTED_PKL = 'data/sets/nuscenes_corrupted/fog/nuscenes_infos_temporal_val.pkl'
+OUTPUT_PKL = 'data/sets/nuscenes_combined/nuscenes_infos_temporal_MIXED_val.pkl'
