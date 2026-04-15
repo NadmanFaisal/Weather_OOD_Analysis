@@ -90,8 +90,24 @@ git checkout v0.17.1
 python setup.py install
 cd ../../
 ```
-> [!NOTE]
-> If the host system lacks a compatible NVIDIA GPU or the necessary CUDA drivers, the installation or runtime may report `CUDA Error` or `Environment errors`. For the purposes of Perception Layer Analysis and OOD Monitoring logic, these errors can be treated as warnings, they prefer to run the perception layers on the CPU instead. In that case, the core Python logic and data processing modules will remain functional and can be executed on the CPU.
+
+<details>
+
+  <summary>If you face errors</summary>
+
+  ```bash
+    conda install -c nvidia cuda-toolkit
+    export CUDA_HOME=$CONDA_PREFIX
+
+    find $CONDA_PREFIX/lib/python3.8/site-packages/torch/include \
+      -name "*.h" -exec grep -l "uint16_t\|uint32_t" {} \; | \
+      xargs -I{} sed -i '1i #include <cstdint>' {}
+
+    pip install trimesh==2.35.39 tensorboard==2.11.0 scikit-image==0.19.3
+    TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6" python setup.py develop
+  ```
+
+</details>
 
 ```bash
 pip install einops fvcore seaborn iopath==0.1.9 timm==0.6.13  typing-extensions==4.5.0 pylint ipython==8.12  numpy==1.19.5 matplotlib==3.5.2 numba==0.48.0 pandas==1.4.4 scikit-image==0.19.3 setuptools==59.5.0
