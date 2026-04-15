@@ -244,7 +244,6 @@ python tools/test.py \
     --eval bbox
 ```
 
-<kbd>
 <details>
 
   <summary>If you face errors</summary>
@@ -259,7 +258,6 @@ python tools/test.py \
   ```
 
 </details>
-</kbd>
 
 To run BEVFormer Base version:
 ```bash
