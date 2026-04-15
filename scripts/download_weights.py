@@ -35,45 +35,21 @@ BEVFusion (Liu et al., ICRA 2023 — https://arxiv.org/abs/2205.13542)
     - swint-nuimages-pretrained.pth : Swin-T backbone (Liu et al., ICCV 2021)
                                       https://github.com/SwinTransformer/storage
 ---------------------------------------------------------------------------
-"""
-
+""" 
 import os
 import sys
 import urllib.request
 import shutil
 from pathlib import Path
-
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from constants import WEIGHTS 
 # ---------------------------------------------------------------------------
 # Weight definitions: (url, relative_dest, label)
 # ---------------------------------------------------------------------------
+
 WEIGHTS = [
-    # --- BEVFormer (GitHub Releases — reliable direct download) ---
-    # Source: https://github.com/fundamentalvision/BEVFormer
-    (
-        "https://github.com/zhiqi-li/storage/releases/download/v1.0/bevformer_r101_dcn_24ep.pth",
-        "bevformer/bevformer_r101_dcn_24ep.pth",
-        "BEVFormer main checkpoint (r101, 24ep)",
-    ),
-    (
-        "https://github.com/zhiqi-li/storage/releases/download/v1.0/r101_dcn_fcos3d_pretrain.pth",
-        "bevformer/r101_dcn_fcos3d_pretrain.pth",
-        "BEVFormer backbone pretrain (ResNet-101 DCN)",
-    ),
-    # --- BEVFusion ---
-    # Official checkpoint from mit-han-lab/bevfusion README
-    # nuScenes val: 68.52 mAP, 71.38 NDS
-    # Source: https://github.com/mit-han-lab/bevfusion
-    (
-        "https://www.dropbox.com/scl/fi/ulaz9z4wdwtypjhx7xdi3/bevfusion-det.pth?rlkey=ovusfi2rchjub5oafogou255v&dl=1",
-        "bevfusion/bevfusion-det.pth",
-        "BEVFusion det checkpoint (official mit-han-lab Dropbox)",
-    ),
-    # Swin-T backbone pretrain (GitHub Releases — reliable direct download)
-    (
-        "https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth",
-        "bevfusion/swint-nuimages-pretrained.pth",
-        "BEVFusion Swin-T backbone pretrain",
-    ),
+    (meta["url"], rel_dest, meta["label"])
+    for rel_dest, meta in WEIGHTS.items()
 ]
 
 
@@ -138,7 +114,7 @@ def find_weights_dir() -> Path:
     script_dir = Path(__file__).resolve().parent
     repo_root = script_dir.parent
 
-    for candidate in ["checkpoints", "weights"]:
+    for candidate in ["checkpoints"]:
         d = repo_root / candidate
         if d.is_dir():
             return d
