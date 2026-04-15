@@ -45,3 +45,23 @@ CORRUPTION_MAP = {
     'rain': 'spatter',
     'sun_glare': 'brightness'
 }
+
+# Model Weights
+WEIGHTS = {
+    "bevformer/bevformer_r101_dcn_24ep.pth": {
+        "url": "https://github.com/zhiqi-li/storage/releases/download/v1.0/bevformer_r101_dcn_24ep.pth",
+        "label": "BEVFormer main checkpoint (r101, 24ep)",
+    },
+    "bevformer/r101_dcn_fcos3d_pretrain.pth": {
+        "url": "https://github.com/zhiqi-li/storage/releases/download/v1.0/r101_dcn_fcos3d_pretrain.pth",
+        "label": "BEVFormer backbone pretrain (ResNet-101 DCN)",
+    },
+    "bevfusion/bevfusion-det.pth": {
+        "url": "https://www.dropbox.com/scl/fi/ulaz9z4wdwtypjhx7xdi3/bevfusion-det.pth?rlkey=ovusfi2rchjub5oafogou255v&dl=1",
+        "label": "BEVFusion det checkpoint (official mit-han-lab Dropbox)",
+    },
+    "bevfusion/swint-nuimages-pretrained.pth": {
+        "url": "https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth",
+        "label": "BEVFusion Swin-T backbone pretrain",
+    },
+}
