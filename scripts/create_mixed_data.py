@@ -6,7 +6,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import CLEAN_PKL, CORRUPTED_PKL, OUTPUT_PKL
 
-def mix_datasets(clean_pkl_path, corrupted_pkl_path, output_pkl_path, sample_size=100):
+def mix_datasets(clean_pkl_path, corrupted_pkl_path, output_pkl_path):
     """
     Creates a mixed dataset containing an equal number of clean and corrupted scenes.
     """
@@ -18,28 +18,36 @@ def mix_datasets(clean_pkl_path, corrupted_pkl_path, output_pkl_path, sample_siz
     with open(corrupted_pkl_path, 'rb') as f:
         corrupted_data = pickle.load(f)
 
-    clean_infos = clean_data['infos']
-    corrupted_infos = corrupted_data['infos']
+    unique_scenes_set = set()
+    for info in clean_data['infos']:
+        unique_scenes_set.add(info['scene_token'])
+    unique_scenes = list(unique_scenes_set)
     
-    max_available = min(len(clean_infos), len(corrupted_infos))
-    if sample_size > max_available:
-        print(f"Warning: Requested {sample_size} but only {max_available} available. Adjusting...")
-        sample_size = max_available
-
+    unique_scenes.sort()
+    
     random.seed(42) 
-    sampled_clean = random.sample(clean_infos, sample_size)
-    sampled_corrupted = random.sample(corrupted_infos, sample_size)
+    random.shuffle(unique_scenes)
+    midpoint = len(unique_scenes) // 2
 
-    for item in sampled_clean:
-        item['is_ood'] = 0  # 0 = Clean / In-Distribution
+    clean_scenes_set = set(unique_scenes[:midpoint])
+    corrupted_scenes_set = set(unique_scenes[midpoint:])
+
+    print(f"Total Scenes found: {len(unique_scenes)}")
+    print(f"Allocating {len(clean_scenes_set)} scenes to Clean and {len(corrupted_scenes_set)} scenes to Foggy.")
+
+    mixed_infos = []
+
+    for idx in range(len(clean_data['infos'])):
+        clean_info = clean_data['infos'][idx]
+        corrupt_info = corrupted_data['infos'][idx]
         
-    for item in sampled_corrupted:
-        item['is_ood'] = 1  # 1 = Corrupted / Out-of-Distribution
+        if clean_info['scene_token'] in clean_scenes_set:
+            clean_info['is_ood'] = 0  # Clean
+            mixed_infos.append(clean_info)
+        else:
+            corrupt_info['is_ood'] = 1  # Corrupted
+            mixed_infos.append(corrupt_info)
 
-    mixed_infos = sampled_clean + sampled_corrupted
-    random.shuffle(mixed_infos)
-
-    # Package it into the OpenMMLab format
     mixed_dataset = {
         'metadata': clean_data['metadata'],
         'infos': mixed_infos
@@ -50,10 +58,10 @@ def mix_datasets(clean_pkl_path, corrupted_pkl_path, output_pkl_path, sample_siz
     with open(output_pkl_path, 'wb') as f:
         pickle.dump(mixed_dataset, f)
         
-    print(f"\nSuccess! Created mixed dataset at {output_pkl_path}")
-    print(f"Total Scenes: {len(mixed_infos)} ({sample_size} Clean, {sample_size} Corrupted)")
+    print(f"\nSuccess! Created mixed scene dataset at {output_pkl_path}")
+    print(f"Total Frames: {len(mixed_infos)}")
 
 if __name__ == '__main__':
 
     # We mix 50 clean and 50 corrupted to make a 100-scene test set
-    mix_datasets(CLEAN_PKL, CORRUPTED_PKL, OUTPUT_PKL, sample_size=50)
+    mix_datasets(CLEAN_PKL, CORRUPTED_PKL, OUTPUT_PKL)
