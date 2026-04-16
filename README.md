@@ -311,7 +311,7 @@ To create the corrupted data with the current simple corruption script, run the 
 ```bash
 python scripts/generate_corrupted_data.py
 ```
-> ![NOTE]
+> [!NOTE]
 > To create different types of corruption, look into `constants.py` in the root and the `CORRUPTION_MAP` variable,
 This will generate corruption data as follows:
 ```
@@ -319,6 +319,44 @@ data/sets/nuscenes_corrupted/
 ├── fog/
 └── snow/
 ```
+But only creating these will not suffice, you also need to make them have the perfect folder structure as required by nuScenes. Perform the following command from the `root`:
+```bash
+cd data/sets/nuscenes_corrupted/snow
+
+# Link the core metadata and temporal sweeps
+ln -sfn ../../nuscenes/v1.0-mini v1.0-mini
+ln -sfn ../../nuscenes/maps maps
+
+# Enter the sweeps folder
+cd sweeps
+
+ln -sfn ../../../nuscenes/sweeps/LIDAR_TOP LIDAR_TOP
+ln -sfn ../../../nuscenes/sweeps/RADAR_FRONT RADAR_FRONT
+ln -sfn ../../../nuscenes/sweeps/RADAR_FRONT_LEFT RADAR_FRONT_LEFT
+ln -sfn ../../../nuscenes/sweeps/RADAR_FRONT_RIGHT RADAR_FRONT_RIGHT
+ln -sfn ../../../nuscenes/sweeps/RADAR_BACK_LEFT RADAR_BACK_LEFT
+ln -sfn ../../../nuscenes/sweeps/RADAR_BACK_RIGHT RADAR_BACK_RIGHT
+
+cd ../
+
+
+# Enter the samples folder (where your snowy CAM images are)
+cd samples
+
+# Link the LiDAR and Radar sensors from the clean dataset
+ln -sfn ../../../nuscenes/samples/LIDAR_TOP LIDAR_TOP
+ln -sfn ../../../nuscenes/samples/RADAR_FRONT RADAR_FRONT
+ln -sfn ../../../nuscenes/samples/RADAR_FRONT_LEFT RADAR_FRONT_LEFT
+ln -sfn ../../../nuscenes/samples/RADAR_FRONT_RIGHT RADAR_FRONT_RIGHT
+ln -sfn ../../../nuscenes/samples/RADAR_BACK_LEFT RADAR_BACK_LEFT
+ln -sfn ../../../nuscenes/samples/RADAR_BACK_RIGHT RADAR_BACK_RIGHT
+
+# Return to root
+cd ../../../../../
+```
+> [!Note]
+> The above commands show an example for only one type of corruption folder (`snow`). There might be multiple corruptions folder (`fog, rain, etc.`). Make sure to change the commands and create the ghost folders accordingly.
+
 Now, you will need to create the pkl files for the new corrupted data. Do this by doing the following command:
 ```bash
 conda activate bevformer
@@ -478,7 +516,7 @@ python tools/test.py \
     --eval bbox
 ```
 
-> ![Note] on nuScenes Evaluation Crashes with Mixed Data
+> [!Note] on nuScenes Evaluation Crashes with Mixed Data
 > If you run the standard BEVFormer evaluation script (tools/test.py --eval bbox) on a custom-mixed dataset, the model will successfully process the images, but the script will inevitably crash at the very end with the following error:
 > AssertionError: Samples in split doesn't match samples in predictions.
 
