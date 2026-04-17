@@ -1,6 +1,8 @@
-from nuscenes.nuscenes import NuScenes
+import os
+from dotenv import load_dotenv
 
-nusc = NuScenes(version='v1.0-mini', dataroot='data/sets/nuscenes', verbose=True)
+load_dotenv()
 
-my_scene = nusc.scene[0]
-print(my_scene)
+username = os.getenv('NUSCENES_USERNAME')
+
+print(username)
