@@ -43,9 +43,20 @@ def mix_datasets(clean_pkl_path, corrupted_pkl_path, output_pkl_path):
         
         if clean_info['scene_token'] in clean_scenes_set:
             clean_info['is_ood'] = 0  # Clean
+            
+            for cam in clean_info['cams'].values():
+                cam_tail = cam['data_path'].split('samples/')[-1]
+                cam['data_path'] = './data/nuscenes/samples/' + cam_tail
+                
             mixed_infos.append(clean_info)
+            
         else:
             corrupt_info['is_ood'] = 1  # Corrupted
+            
+            for cam in corrupt_info['cams'].values():
+                cam_tail = cam['data_path'].split('samples/')[-1]
+                cam['data_path'] = './data/nuscenes_corrupted/fog/samples/' + cam_tail
+                
             mixed_infos.append(corrupt_info)
 
     mixed_dataset = {
@@ -63,5 +74,4 @@ def mix_datasets(clean_pkl_path, corrupted_pkl_path, output_pkl_path):
 
 if __name__ == '__main__':
 
-    # We mix 50 clean and 50 corrupted to make a 100-scene test set
     mix_datasets(CLEAN_PKL, CORRUPTED_PKL, OUTPUT_PKL)
