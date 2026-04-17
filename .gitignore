@@ -10,3 +10,11 @@
 *.gz
 *.zip
 .DS_Store
+/checkpoints/*.pth
+
+# Perception Models
+core_models/BEVFormer
+core_models/mmdetection3d
+
+# checkpoints
+*.pth
