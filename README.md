@@ -694,3 +694,8 @@ python tools/test.py \
 For the scope of our Out-of-Distribution (OOD) analysis, we do not care about official nuScenes object detection benchmarking. The official evaluator only calculates how accurately the model drew 3D bounding boxes. However, to calculate OOD metrics like Energy Scores and Mahalanobis Distance, we need the model's raw mathematical uncertainty—specifically, the logits and feature maps generated inside the classification head before the bounding boxes are finalized.
 
 > The fact that BEVFormer successfully processed the 67 mixed frames means the model did its job perfectly. To extract our required metrics, we completely bypass the rigid nuScenes grading script. Instead, we use a custom Python script equipped with PyTorch Forward Hooks to quietly intercept and save the raw logits as the model runs, allowing us to evaluate its performance against weather corruption mathematically.
+
+pip install openxlab
+pip install python-dotenv
+
+create an acc: https://openxlab.org.cn/home
