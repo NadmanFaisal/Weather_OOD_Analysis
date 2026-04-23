@@ -21,6 +21,12 @@ FILES = {
     #"v1.0-trainval10_blobs.tgz":"31e795f2c13f62533c727119b822d739",
 }
 
+CORE_NUSCENES_FOLDER = ["maps", "sweeps", "v1.0-trainval"]
+LIDAR_SENSORS = [
+    "LIDAR_TOP", "RADAR_FRONT", "RADAR_FRONT_LEFT", 
+    "RADAR_FRONT_RIGHT", "RADAR_BACK_LEFT", "RADAR_BACK_RIGHT"
+]
+
 NUSCENES_CAMERAS = [
     'CAM_FRONT', 
     'CAM_FRONT_RIGHT', 
