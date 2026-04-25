@@ -7,9 +7,6 @@ from pathlib import Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import CLEAN_PKL, OUTPUT_PKL_PATHS
 
-from pathlib import Path
-from constants import CLEAN_PKL, OUTPUT_PKL_PATHS
-
 def replace_paths(obj, target_str):
     if isinstance(obj, dict):
         return {k: replace_paths(v, target_str) for k, v in obj.items()}
