@@ -465,7 +465,7 @@ data/
             └── Snow
 ```
 > [!NOTE]
-> The corrupted datasets downloaded from OpenDataLab do not naturally come inside a samples/ folder. We ensure in the later steps that the raw CAM_FRONT, CAM_BACK, etc., folders are physically placed inside [Weather]/[Severity]/samples/ so that the perception models can find them.
+> The corrupted datasets downloaded from OpenDataLab do not naturally come inside a `samples/` folder. We ensure in the later steps that the raw `CAM_FRONT`, `CAM_BACK`, etc., folders are physically placed inside `[Weather]/[Severity]/samples/` so that the perception models can find them.
 ### Step 4: Creating necessary directories
 Run the following to create shadow folder:
 ```bash
@@ -473,7 +473,6 @@ python scripts/build_shadow_nuscenes.py
 ```
 > [!IMPORTANT]
 > BEVFormer models expect a strict, unified folder structure (including `maps`, `sweeps`, and metadata JSONs). However, the nuScenes-c dataset downloaded from Robo3D is intentionally missing these folders. Because the benchmark's goal is to test Out-Of-Distribution (OOD) generalization without retraining, the dataset authors only provided the corrupted validation camera images, omitting the massive training sets and structural files to save space.
-
 > To satisfy the PyTorch dataloader without breaking OOD rules, this script creates a "shadow" directory. It creates symlinks to the clean nuscenes dataset for structural requirements (like `maps` and `v1.0-trainval`), while reserving the `samples/` folder exclusively for the physical, corrupted .jpg images.
 
 ## Run BEVFormer with corrupted data (Inference / Evaluation)
@@ -492,7 +491,8 @@ Now that we have understood the directories, we now need to make the necessary `
 ```bash
 python scripts/patch_pkl.py
 ```
-> [!Important] What does it do?
+> [!Important] 
+> What does it do?
 > Since BEVFormer cannot manually annotate the corrupted data as training images are missing (only val set images are present), we need to create copies of the clean data `nuscenes`'s `pkl` files and then manually change the paths specified inside to point towards the corrupted images in the correct directories.
 ### Step 3: Change config file to point to the right directory
 We have already fixed major part of the config file to point to the right files. But one line needs to change depending on what data to evaluate on. For example if you want to evaluate `Snow/mid` dataset, navigate to `core_models/BEVFormer_Snow/projects/configs/bevformer/bevformer_base.py` and change the `data_root` to this:
