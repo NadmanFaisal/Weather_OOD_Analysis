@@ -22,24 +22,54 @@ def replace_paths(obj, target_str):
         return obj
 
 print("Loading clean annotations...")
-with open(CLEAN_PKL, 'rb') as f:
-    clean_data = pickle.load(f)
+
+try:
+    with open(CLEAN_PKL, 'rb') as f:
+        clean_data = pickle.load(f)
+except FileNotFoundError:
+    print(f"\tCRITICAL ERROR: Could not find the clean pkl file at {CLEAN_PKL}")
+    print("Please check your path. Aborting script.")
+    sys.exit(1)
+except Exception as e:
+    print(f"t\CRITICAL ERROR: Failed to load {CLEAN_PKL}. Reason: {e}")
+    sys.exit(1)
+
+success_count = 0
+failed_paths = []
 
 for output_path in OUTPUT_PKL_PATHS:
-    p = Path(output_path)
-    severity = p.parent.name
-    weather = p.parent.parent.name
+    try:
+        p = Path(output_path)
+        severity = p.parent.name
+        weather = p.parent.parent.name
 
-    target_str = f'./data/nuScenes-c/{weather}/{severity}'
-    print(f"\nPatching metadata for {weather} ({severity})...")
+        target_str = f'./data/nuScenes-c/{weather}/{severity}'
+        print(f"\nPatching metadata for {weather} ({severity})...")
 
-    patched_data = replace_paths(clean_data, target_str)
+        patched_data = replace_paths(clean_data, target_str)
 
-    p.parent.mkdir(parents=True, exist_ok=True)
+        p.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'wb') as f:
-        pickle.dump(patched_data, f)
+        with open(output_path, 'wb') as f:
+            pickle.dump(patched_data, f)
 
-    print(f"Success! Saved to: {output_path}")
+        print(f"Success! Saved to: {output_path}")
+        success_count += 1
 
-print("All pkl files have been generated!")
+    except Exception as e:
+        print(f"\tERROR processing {output_path}: {e}")
+        failed_paths.append((output_path, str(e)))
+
+print("\n" + "="*40)
+print("\tBATCH PROCESSING SUMMARY")
+print("="*40)
+print(f"Total Attempted: {len(OUTPUT_PKL_PATHS)}")
+print(f"Successful:      {success_count}")
+print(f"Failed:          {len(failed_paths)}")
+
+if failed_paths:
+    print("\nFAILED FILES:")
+    for path, error in failed_paths:
+        print(f"\t- {path}\n   Reason: {error}")
+else:
+    print("\nAll pkl files have been generated flawlessly!")
