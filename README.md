@@ -435,7 +435,7 @@ pip install python-dotenv
 ### Step 2:
 Create an acc: https://openxlab.org.cn/home, and store the secrets in the `.env` in root as follows:
 ```bash
-OPENXLAB_AK="YOUR_SECRE_ACTION_KEY"
+OPENXLAB_AK="YOUR_SECRET_ACTION_KEY"
 OPENXLAB_SK="YOUR_SECRET_KEY"
 ```
 ### Step 3: Downloading the data
@@ -464,13 +464,17 @@ data/
             ├── MotionBlur
             └── Snow
 ```
+> [!NOTE]
+> The corrupted datasets downloaded from OpenDataLab do not naturally come inside a samples/ folder. We ensure in the later steps that the raw CAM_FRONT, CAM_BACK, etc., folders are physically placed inside [Weather]/[Severity]/samples/ so that the perception models can find them.
 ### Step 4: Creating necessary directories
 Run the following to create shadow folder:
 ```bash
 python scripts/build_shadow_nuscenes.py 
 ```
 > [!IMPORTANT]
-> This step is necessary because BEVFormer models expect a certain folder structure within the dataset, which is not present with the nuScenes-c downloaded from Robo3D. The reason being is that the researchers wants to test OOD data on AI models, and not train them. Hence, certain folders are missing from the corrupted data. That is why, we create symlinks to the clean `nuscenes` data instead.
+> BEVFormer models expect a strict, unified folder structure (including `maps`, `sweeps`, and metadata JSONs). However, the nuScenes-c dataset downloaded from Robo3D is intentionally missing these folders. Because the benchmark's goal is to test Out-Of-Distribution (OOD) generalization without retraining, the dataset authors only provided the corrupted validation camera images, omitting the massive training sets and structural files to save space.
+
+> To satisfy the PyTorch dataloader without breaking OOD rules, this script creates a "shadow" directory. It creates symlinks to the clean nuscenes dataset for structural requirements (like `maps` and `v1.0-trainval`), while reserving the `samples/` folder exclusively for the physical, corrupted .jpg images.
 
 ## Run BEVFormer with corrupted data (Inference / Evaluation)
 Before we can forward feed the data into the perception models, we need to change a few things.
@@ -493,7 +497,7 @@ python scripts/patch_pkl.py
 ### Step 3: Change config file to point to the right directory
 We have already fixed major part of the config file to point to the right files. But one line needs to change depending on what data to evaluate on. For example if you want to evaluate `Snow/mid` dataset, navigate to `core_models/BEVFormer_Snow/projects/configs/bevformer/bevformer_base.py` and change the `data_root` to this:
 ```python
-data_root = 'data/nuScenes-c/Fog/hard/'
+data_root = 'data/nuScenes-c/Snow/mid/'
 ```
 If, suppose you want to run `Fog/mid` dataset, then navigate to `core_models/BEVFormer_Fog/projects/configs/bevformer/bevformer_base.py` and change the `data_root` to this:
 ```python
