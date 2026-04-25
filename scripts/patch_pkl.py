@@ -1,33 +1,45 @@
+import sys
+import os
 import pickle
 
 from pathlib import Path
-from constants import CLEAN_PKL
+# Gets the project directory's name
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from constants import CLEAN_PKL, OUTPUT_PKL_PATHS
 
-clean_pkl = 'data/sets/nuscenes/nuscenes_infos_temporal_val.pkl'
-fog_pkl = 'data/sets/nuscenes-c/nuScenes-c/Fog/easy/nuscenes_infos_temporal_val.pkl'
+from pathlib import Path
+from constants import CLEAN_PKL, OUTPUT_PKL_PATHS
 
-def replace_paths(obj):
+def replace_paths(obj, target_str):
     if isinstance(obj, dict):
-        return {k: replace_paths(v) for k, v in obj.items()}
+        return {k: replace_paths(v, target_str) for k, v in obj.items()}
     elif isinstance(obj, list):
-        return [replace_paths(v) for v in obj]
+        return [replace_paths(v, target_str) for v in obj]
     elif isinstance(obj, str):
         # Mimic the BEVFormer's required path
-        return obj.replace('./data/nuscenes', './data/nuScenes-c/Fog/easy')
+        return obj.replace('./data/nuscenes', target_str)
     else:
         return obj
 
 print("Loading clean annotations...")
-with open(clean_pkl, 'rb') as f:
-    data = pickle.load(f)
+with open(CLEAN_PKL, 'rb') as f:
+    clean_data = pickle.load(f)
 
-print("Patching image paths for Fog...")
-patched_data = replace_paths(data)
+for output_path in OUTPUT_PKL_PATHS:
+    p = Path(output_path)
+    severity = p.parent.name
+    weather = p.parent.parent.name
 
-Path(fog_pkl).parent.mkdir(parents=True, exist_ok=True)
+    target_str = f'./data/nuScenes-c/{weather}/{severity}'
+    print(f"\nPatching metadata for {weather} ({severity})...")
 
-print("Saving patched annotations...")
-with open(fog_pkl, 'wb') as f:
-    pickle.dump(patched_data, f)
+    patched_data = replace_paths(clean_data, target_str)
 
-print(f"Success! Patched file saved to: {fog_pkl}")
+    p.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output_path, 'wb') as f:
+        pickle.dump(patched_data, f)
+
+    print(f"Success! Saved to: {output_path}")
+
+print("All pkl files have been generated!")

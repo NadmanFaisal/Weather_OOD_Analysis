@@ -66,5 +66,19 @@ WEIGHTS = {
 
 # PKL files
 CLEAN_PKL = 'data/sets/nuscenes/nuscenes_infos_temporal_val.pkl'
+
+OUTPUT_PKL_PATHS = [
+    #Fog
+    'data/sets/nuscenes-c/nuScenes-c/Fog/easy/nuscenes_infos_temporal_val.pkl',
+    'data/sets/nuscenes-c/nuScenes-c/Fog/mid/nuscenes_infos_temporal_val.pkl',
+    'data/sets/nuscenes-c/nuScenes-c/Fog/hard/nuscenes_infos_temporal_val.pkl',
+
+    #Snow
+    'data/sets/nuscenes-c/nuScenes-c/Snow/easy/nuscenes_infos_temporal_val.pkl',
+    'data/sets/nuscenes-c/nuScenes-c/Snow/mid/nuscenes_infos_temporal_val.pkl',
+    'data/sets/nuscenes-c/nuScenes-c/Snow/hard/nuscenes_infos_temporal_val.pkl',
+]
+
+# Used for our own custom corruption generation (Not Needed anymore)
 CORRUPTED_PKL = 'data/sets/nuscenes_corrupted/fog/nuscenes_infos_temporal_val.pkl'
 OUTPUT_PKL = 'data/sets/nuscenes_combined/nuscenes_infos_temporal_MIXED_val.pkl'
