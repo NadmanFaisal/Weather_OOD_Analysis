@@ -1,3 +1,26 @@
+"""
+Researcher(s): Hasan Zahid, Nadman Abdullah Bin Faisal, Vaibhav Puram
+
+Artifact: 
+nuScenes-C Relative Shadow Directory Builder
+Methodology: Design Science Research (Cycle II: Solution Design)
+
+Purpose:
+This utility constructs "shadow directories" for the corrupted nuScenes-C dataset 
+using relative symbolic links. It restructures the extracted corrupted camera 
+data into the required `samples/` hierarchy and symlinks the unaltered metadata 
+and LiDAR sensor data from the clean nuScenes dataset. This ensures seamless 
+compatibility with BEVFormer and BEVFusion data loaders for post-hoc OOD 
+robustness benchmarking while preventing massive data duplication.
+
+This ensures seamless compatibility with BEVFormer and BEVFusion data loaders 
+for post-hoc OOD robustness benchmarking while preventing massive data duplication.
+
+NOTE: This file explicitly excludes symlinking to corrupted LIDAR_TOP data 
+(data/sets/nuscenes-c/nuScenes-C/samples/*), as it is not required for the 
+BEVFormer architecture's processing pipeline.
+"""
+
 import os
 import shutil
 

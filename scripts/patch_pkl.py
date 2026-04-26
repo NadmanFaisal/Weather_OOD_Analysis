@@ -1,3 +1,20 @@
+"""
+Researcher(s): Hasan Zahid, Nadman Abdullah Bin Faisal, Vaibhav Puram
+
+Artifact: 
+nuScenes-C Annotation (PKL) Metadata Patcher
+Methodology: Design Science Research (Cycle II: Solution Design)
+
+Purpose:
+This utility dynamically patches the clean nuScenes annotation metadata 
+(.pkl files) to redirect image file paths to the newly generated 
+nuScenes-c shadow directories. By recursively replacing base data paths 
+for each specific corruption type and severity level, it ensures that 
+BEVFormer and BEVFusion dataloaders fetch the correct Out-of-Distribution 
+(OOD) camera data while preserving the original dataset's bounding box 
+and LiDAR metadata intact.
+"""
+
 import sys
 import os
 import pickle
@@ -28,7 +45,7 @@ except FileNotFoundError:
     print("Please check your path. Aborting script.")
     sys.exit(1)
 except Exception as e:
-    print(f"t\CRITICAL ERROR: Failed to load {CLEAN_PKL}. Reason: {e}")
+    print(f"\tCRITICAL ERROR: Failed to load {CLEAN_PKL}. Reason: {e}")
     sys.exit(1)
 
 success_count = 0

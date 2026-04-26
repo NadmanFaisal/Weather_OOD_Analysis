@@ -1,3 +1,19 @@
+# src: https://github.com/worldbench/Robo3D
+"""
+Researcher(s): Hasan Zahid, Nadman Abdullah Bin Faisal, Vaibhav Puram
+
+Artifact: 
+nuScenes-C (Corrupted) Data Ingestion & Extraction Pipeline
+Methodology: Design Science Research (Cycle II: Solution Design)
+
+Purpose:
+This utility handles the automated retrieval of the nuScenes-C dataset 
+via the OpenXLab repository. It sequentially extracts the heavy image 
+(.tar.gz) and pointcloud (.zip) archives into the target data root, 
+preparing the corrupted dataset for post-hoc OOD robustness benchmarking 
+on BEVFormer and BEVFusion architectures.
+"""
+
 import os
 import subprocess
 
