@@ -1,6 +1,8 @@
 *__pycache__/*
+*__pycache__
 *.venv/
 *.env
+*.deb
 
 # Datasets
 /data/
@@ -10,3 +12,14 @@
 *.gz
 *.zip
 .DS_Store
+/checkpoints/*.pth
+
+# Perception Models
+core_models/BEVFormer
+core_models/mmdetection3d
+
+# checkpoints
+*.pth
+
+#Safety Monitor
+safety_monitor/__pycache__
