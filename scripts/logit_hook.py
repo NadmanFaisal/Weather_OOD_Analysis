@@ -1,4 +1,5 @@
 # src: https://web.stanford.edu/~nanbhas/blog/forward-hooks-pytorch/
+# src: https://www.digitalocean.com/community/tutorials/pytorch-hooks-gradient-clipping-debugging
 
 class LogitHook:
     def __init__(self):
@@ -8,7 +9,7 @@ class LogitHook:
 
     def get_logit(self, name):
         def hook(model, input, output):
-            self.logits[name] = output.detach()
+            self.logits[name] = output.detach().cpu()
         return hook
 
     def register_hook(self, model, num_decoder_layers=6):
