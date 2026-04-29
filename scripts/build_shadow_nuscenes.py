@@ -9,22 +9,24 @@ Purpose:
 This utility constructs "shadow directories" for the corrupted nuScenes-C dataset 
 using relative symbolic links. It restructures the extracted corrupted camera 
 data into the required `samples/` hierarchy and symlinks the unaltered metadata 
-and LiDAR sensor data from the clean nuScenes dataset. This ensures seamless 
-compatibility with BEVFormer and BEVFusion data loaders for post-hoc OOD 
-robustness benchmarking while preventing massive data duplication.
+from the clean nuScenes dataset.
 
 This ensures seamless compatibility with BEVFormer and BEVFusion data loaders 
 for post-hoc OOD robustness benchmarking while preventing massive data duplication.
 
-NOTE: This file explicitly excludes symlinking to corrupted LIDAR_TOP data 
+NOTE 1: This file explicitly excludes symlinking to corrupted LIDAR_TOP data 
 (data/sets/nuscenes-c/nuScenes-C/samples/*), as it is not required for the 
-BEVFormer architecture's processing pipeline.
+BEVFormer architecture's vision-only processing pipeline.
+
+NOTE 2: This file explicitly excludes symlinking to historical sweep data (`sweeps/`) 
+to prevent a temporal data leak during sequential evaluation, ensuring the model's 
+recurrent memory relies strictly on corrupted OOD keyframes.
 """
 
 import os
 import shutil
 
-from constants import CORE_NUSCENES_FOLDER, LIDAR_SENSORS
+from constants import CORE_NUSCENES_FOLDER
 
 print("Building Shadow Directories for BEVFormer (Relative Paths)...")
 
@@ -52,22 +54,13 @@ for corruption in os.listdir(corrupt_dir):
                 shutil.move(os.path.join(severity_path, item), os.path.join(samples_dir, item))
 
         for folder in CORE_NUSCENES_FOLDER:
+            if folder == "sweeps":
+                continue
+
             target = os.path.join(clean_dir, folder)
             link = os.path.join(severity_path, folder)
             
             rel_target = os.path.relpath(target, start=severity_path)
-            
-            if os.path.islink(link):
-                os.unlink(link)
-                
-            if not os.path.exists(link):
-                os.symlink(rel_target, link)
-
-        for sensor in LIDAR_SENSORS:
-            target = os.path.join(clean_dir, "samples", sensor)
-            link = os.path.join(samples_dir, sensor)
-            
-            rel_target = os.path.relpath(target, start=samples_dir)
             
             if os.path.islink(link):
                 os.unlink(link)
