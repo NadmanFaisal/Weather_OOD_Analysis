@@ -15,8 +15,7 @@
 /checkpoints/*.pth
 
 # Perception Models
-core_models/BEVFormer
-core_models/mmdetection3d
+core_models/*
 
 # checkpoints
 *.pth
