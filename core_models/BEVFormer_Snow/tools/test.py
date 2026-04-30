@@ -274,6 +274,10 @@ def main():
 
             print(dataset.evaluate(outputs, **eval_kwargs))
 
+    # Detach hooks
+    if 'interceptor' in locals():
+        interceptor.detach_hook()
+
 
 if __name__ == '__main__':
     main()
