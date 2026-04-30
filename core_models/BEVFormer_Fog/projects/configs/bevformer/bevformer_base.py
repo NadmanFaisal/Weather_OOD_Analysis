@@ -1,3 +1,26 @@
+import os
+
+if 'OOD_WEATHER' not in os.environ or 'OOD_SEVERITY' not in os.environ:
+    raise ValueError(
+        "\n\n[!] CRITICAL ERROR: Missing OOD Benchmarking Variables.\n"
+        "You must pass OOD_WEATHER and OOD_SEVERITY to the evaluation script.\n"
+        "Example: OOD_WEATHER=Snow OOD_SEVERITY=hard ./tools/dist_test.sh ...\n"
+    )
+
+weather = os.environ['OOD_WEATHER']
+severity = os.environ['OOD_SEVERITY']
+
+data_root = f'data/nuScenes-c/{weather}/{severity}/'
+
+if not os.path.exists(data_root):
+    raise FileNotFoundError(
+        f"\n\n[!] CRITICAL ERROR: Target dataset directory does not exist.\n"
+        f"Looking for: {data_root}\n"
+        f"Did you misspell the weather/severity, or forget to run the shadow folder script?\n"
+    )
+
+del os
+
 _base_ = [
     '../datasets/custom_nus-3d.py',
     '../_base_/default_runtime.py'
@@ -160,7 +183,7 @@ model = dict(
             pc_range=point_cloud_range))))
 
 dataset_type = 'CustomNuScenesDataset'
-data_root = 'data/nuScenes-c/Fog/easy/'
+data_root = f'data/nuScenes-c/{weather}/{severity}/'
 file_client_args = dict(backend='disk')
 
 
