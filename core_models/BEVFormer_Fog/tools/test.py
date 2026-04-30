@@ -23,7 +23,13 @@ from projects.mmdet3d_plugin.bevformer.apis.test import custom_multi_gpu_test
 from mmdet.datasets import replace_ImageToTensor
 import time
 import os.path as osp
+import sys
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+repo_root = os.path.abspath(os.path.join(current_dir, '../../..'))
+scripts_dir = os.path.join(repo_root, 'scripts')
+sys.path.insert(0, scripts_dir)
+from logit_hook import LogitHook
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -234,6 +240,11 @@ def main():
             model.cuda(),
             device_ids=[torch.cuda.current_device()],
             broadcast_buffers=False)
+        
+        # Register PyTorch hook (gets attached per GPU)
+        interceptor = LogitHook()
+        interceptor.register_hook(model)
+        
         outputs = custom_multi_gpu_test(model, data_loader, args.tmpdir,
                                         args.gpu_collect)
 
@@ -261,6 +272,9 @@ def main():
 
             print(dataset.evaluate(outputs, **eval_kwargs))
 
+    # Detach hooks
+    if 'interceptor' in locals():
+        interceptor.detach_hook()
 
 if __name__ == '__main__':
     main()
