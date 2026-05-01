@@ -27,8 +27,8 @@ import sys
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 repo_root = os.path.abspath(os.path.join(current_dir, '../../..'))
-scripts_dir = os.path.join(repo_root, 'scripts')
-sys.path.insert(0, scripts_dir)
+monitor_dir = os.path.join(repo_root, 'safety_monitor')
+sys.path.insert(0, monitor_dir)
 from logit_hook import LogitHook
 
 def parse_args():

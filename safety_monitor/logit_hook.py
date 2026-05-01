@@ -50,6 +50,19 @@ class LogitHook:
 
             if current_batch  == 0:
                 print("\n HOOKS FIRED.\n")
+
+            sample_tokens = []
+            
+            for arg in input:
+                if isinstance(arg, list) and len(arg) > 0 and isinstance(arg[0], dict):
+                    if 'sample_idx' in arg[0] or 'token' in arg[0]:
+                        for meta in arg:
+                            token = meta.get('sample_idx', meta.get('token', f'unknown_batch_{current_batch}'))
+                            sample_tokens.append(token)
+                        break
+            
+            if not sample_tokens:
+                sample_tokens = [f'unknown_batch_{current_batch}']
             
             logits_tensor = None
             if isinstance(output, dict):
@@ -59,12 +72,17 @@ class LogitHook:
 
             if logits_tensor is not None:
                 final_layer_logits = logits_tensor[-1].detach().cpu()
+
+                save_payload = {
+                    'sample_token': sample_tokens[0],
+                    'logits': final_layer_logits
+                }
                 
-                current_batch = self.call_counts.get(name, 0)
-                filename = f"head_final_logits_batch_{current_batch}_gpu_{pid}.pt"
+                token_str = str(sample_tokens[0]).replace('/', '_')
+                filename = f"logits_token_{token_str}_gpu_{pid}.pt"
                 save_path = os.path.join(self.save_dir, filename)
                 
-                torch.save(final_layer_logits, save_path)
+                torch.save(save_payload, save_path)
                 
                 self.call_counts[name] = current_batch + 1
                 
