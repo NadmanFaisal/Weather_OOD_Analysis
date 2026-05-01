@@ -2,18 +2,10 @@ import torch
 import os
 import sys
 import glob
+import json
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from constants import LOGIT_OUTPUT
-
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-logit_dir_path = os.path.abspath(os.path.join(
-    current_dir,
-    "../",
-    "data/intercepted_logits/"
-))
+from constants import LOGIT_OUTPUT, ENERGY_OUTPUT
 
 def compute_energy_score(logits: torch.Tensor, T: float = 1.0) -> torch.Tensor:
     """Compute the energy score for a batch of logits.
@@ -34,6 +26,15 @@ def compute_energy_score(logits: torch.Tensor, T: float = 1.0) -> torch.Tensor:
     energy_score = query_scores.min()
     return energy_score.detach()
 
+def save_energy_scores(results: dict, save_dir: str):
+    """Saves the calculated energy scores to a JSON file."""
+    os.makedirs(save_dir, exist_ok=True)
+    file_path = os.path.join(save_dir, "energy_scores.json")
+    
+    with open(file_path, "w") as f:
+        json.dump(results, f, indent=4)
+        
+    print(f"Saved {len(results)} scores to: {file_path}")
 
 if __name__ == "__main__":
     weather = os.environ.get('OOD_WEATHER')
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     if not all([weather, severity, timestamp]):
         print("\n[!] CRITICAL ERROR: Missing Environment Variables.")
         print("Please run the script like this:")
-        print("OOD_WEATHER=Fog OOD_SEVERITY=easy DATE_TIME_STAMP=20260501_000617 python safety_monitor/energy_score.py\n")
+        print("OOD_WEATHER=Fog OOD_SEVERITY=easy OOD_TIMESTAMP=20260501_000617 python safety_monitor/energy_score.py\n")
         sys.exit(1)
 
     target_dir = os.path.join(LOGIT_OUTPUT, weather, severity, timestamp)
@@ -74,6 +75,10 @@ if __name__ == "__main__":
             print(f"Failed to process {os.path.basename(file_path)}: {e}")
 
     print("Processing Complete!")
+
+    energy_save_location = os.path.join(ENERGY_OUTPUT, weather, severity, timestamp)
+    save_energy_scores(frame_results, energy_save_location)
+
     print(f"Successfully calculated energy scores for {len(frame_results)} frames.")
     
     print("\n--- Sample Results ---")
@@ -82,11 +87,10 @@ if __name__ == "__main__":
             break
         print(f"Token: {token} | Energy: {score:.4f}")
 
-    model_state_dict = torch.load(file_path)
-    print("Model dict:", model_state_dict)
-    print("Shape of Model dict:", model_state_dict.shape)
+    #model_state_dict = torch.load(file_path)
+    #print("Model dict:", model_state_dict)
+    #print("Shape of Model dict:", model_state_dict.shape)
 
-    energy_score = compute_energy_score(model_state_dict)
-    print("Energy score", energy_score)
-    print("Shape of energy score:", energy_score.shape)
-
+    #energy_score = compute_energy_score(model_state_dict)
+    #print("Energy score", energy_score)
+    #print("Shape of energy score:", energy_score.shape)
