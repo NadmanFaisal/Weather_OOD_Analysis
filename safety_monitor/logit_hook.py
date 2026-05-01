@@ -5,33 +5,49 @@ import sys
 import torch
 from datetime import datetime
 
-if 'OOD_WEATHER' not in os.environ or 'OOD_SEVERITY' not in os.environ:
-    raise ValueError(
-        "\n\n[!] CRITICAL ERROR: Missing OOD Benchmarking Variables.\n"
-        "You must pass OOD_WEATHER and OOD_SEVERITY to the evaluation script.\n"
-        "Example: OOD_WEATHER=Snow OOD_SEVERITY=hard ./tools/dist_test.sh ...\n"
-    )
-
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import LOGIT_OUTPUT
 
-weather = os.environ['OOD_WEATHER']
-severity = os.environ['OOD_SEVERITY']
+is_clean_run = os.environ.get('EVAL_CLEAN', 'False') == 'True'
 
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+if is_clean_run:
+    print(f"\n[INFO] Clean Dataset Flag detected. Routing logits to {LOGIT_OUTPUT}/nuscenes/\n")
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-dynamic_save_path = os.path.abspath(
-    os.path.join(
-        current_dir, 
-        '../',
-        LOGIT_OUTPUT,
-        weather, 
-        severity, 
-        timestamp
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    dynamic_save_path = os.path.abspath(
+        os.path.join(
+            current_dir, 
+            '../',
+            LOGIT_OUTPUT,
+            'nuscenes/',
+            timestamp
+        )
     )
-)
+else:
+    if 'OOD_WEATHER' not in os.environ or 'OOD_SEVERITY' not in os.environ:
+        raise ValueError(
+            "\n\n[!] CRITICAL ERROR: Missing OOD Benchmarking Variables.\n"
+            "You must pass OOD_WEATHER and OOD_SEVERITY to the evaluation script.\n"
+            "Example: OOD_WEATHER=Snow OOD_SEVERITY=hard ./tools/dist_test.sh ...\n"
+        )
+
+    weather = os.environ['OOD_WEATHER']
+    severity = os.environ['OOD_SEVERITY']
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    dynamic_save_path = os.path.abspath(
+        os.path.join(
+            current_dir, 
+            '../',
+            LOGIT_OUTPUT,
+            weather, 
+            severity, 
+            timestamp
+        )
+    )
 
 os.makedirs(dynamic_save_path, exist_ok=True)
 
