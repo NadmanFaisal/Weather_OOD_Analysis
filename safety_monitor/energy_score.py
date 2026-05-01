@@ -26,6 +26,12 @@ def compute_energy_score(logits: torch.Tensor, T: float = 1.0) -> torch.Tensor:
     """
     scores = -T * torch.logsumexp(logits / T, dim=1)
     return scores.detach()
+
+if __name__ == "__main__":
+
+
+
+
     model_state_dict = torch.load(file_path)
     print("Model dict:", model_state_dict)
     print("Shape of Model dict:", model_state_dict.shape)
