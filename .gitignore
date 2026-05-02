@@ -55,6 +55,8 @@ core_models/*/.idea/
 core_models/*/.DS_Store
 core_models/*/.git
 
+core_models/BEVFormer.bak
+core_models/BEVFormer_Snow.bak
 core_models/mmdetection3d
 
 # checkpoints
