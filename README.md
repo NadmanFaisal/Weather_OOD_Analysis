@@ -475,15 +475,13 @@ python scripts/build_shadow_nuscenes.py
 
 ## Run BEVFormer with corrupted data (Inference / Evaluation)
 Before we can forward feed the data into the perception models, we need to change a few things.
-### Step 1: Understanding which folder to navigate to (NEED TO BE CHANGED WHEN UNIFIED BEVFORMER FOLDER WILL BE DONE USING BUG BRANCH)
-In our `core_models` directory, we have 3 BEVFormer folders:
+### Step 1: Understanding the directories
+In our `core_models` directory, we have the BEVFormer directory:
 ```
 core_models/
 └── BEVFormer/
-└── BEVFormer_Fog/
-└── BEVFormer_Snow/
 ```
-The `BEVFormer_Fog` folder is used to run models with `Fog` corruptions, while the `BEVFormer_Snow` is used to run models with `Snow` corruptions. We have however made changes to the config of only the base model (`core_models/BEVFormer*/projects/configs/bevformer/bevformer_base.py`). The dropdown below explains how we changed the config, but it is not necessary if you are in our original server.
+The `BEVFormer` folder is used to run models with any dataset (`Fog` corruptions, `Snow` corruptions, and also `nusecnes` clean dataset). We have made changes to the `config` of only the base model (`core_models/BEVFormer/projects/configs/bevformer/bevformer_base.py`), and also `tools` where the `PyTorch hooks` are attached for necessary interceptions.
 ### Step 2: Creating required PKL files
 Now that we have understood the directories, we now need to make the necessary `pkl`. From the root::
 ```bash
