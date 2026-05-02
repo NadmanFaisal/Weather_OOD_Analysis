@@ -120,6 +120,8 @@ class LogitHook:
             
             # Loads the logits into the CPU to save GPU from expanding too mucn
             if logits_tensor is not None:
+
+                # Extract logit outputs from the last layer of the detection head
                 final_layer_logits = logits_tensor[-1].detach().cpu()
 
                 # Saves the data
@@ -141,7 +143,7 @@ class LogitHook:
     # TODO: This method gets called multiple times due to multiple GPUs. Need to be fixed.
     def register_hook(self, model):
 
-        # Attach the hooks to the 5th layer of the BEVFormer model
+        # Attach the hooks to the entire detection head
         target_name = 'module.pts_bbox_head'
         for name, module in model.named_modules():
             if name == target_name:
