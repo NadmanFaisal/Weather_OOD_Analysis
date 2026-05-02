@@ -412,7 +412,7 @@ OOD_WEATHER=Clear OOD_SEVERITY=baseline PYTHONPATH=. ./tools/dist_test.sh \
 ```
 > [!IMPORTANT]
 > The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Clean` for clean dataset, or `Fog` or `Snow` (for corrupted dataset).
+> The `OOD_WEATHER` can be `Clear` for clean dataset, or `Fog` or `Snow` (for corrupted dataset).
 > The `OOD_SEVERITY` can be `baseline` for clean dataset, or `easy`, `mid`, or `hard` (for corrupted dataset).
 
 > [!NOTE]
@@ -544,7 +544,7 @@ OOD_WEATHER=Snow OOD_SEVERITY=hard PYTHONPATH=. ./tools/dist_test.sh \
 ```
 > [!IMPORTANT]
 > The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clean` for clean dataset.
+> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
 > The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
 
 > [!NOTE]
