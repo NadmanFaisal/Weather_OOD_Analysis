@@ -47,7 +47,13 @@ if __name__ == "__main__":
         print("OOD_WEATHER=Fog OOD_SEVERITY=easy OOD_TIMESTAMP=20260501_000617 python safety_monitor/energy_score.py\n")
         sys.exit(1)
 
-    target_dir = os.path.join(LOGIT_OUTPUT, weather, severity, timestamp)
+    if weather == "Clear" and severity == "baseline":
+        target_dir = os.path.join(LOGIT_OUTPUT, "nuscenes", timestamp)
+        energy_save_location = os.path.join(ENERGY_OUTPUT, "nuscenes", timestamp)
+
+    else:
+        target_dir = os.path.join(LOGIT_OUTPUT, weather, severity, timestamp)
+        energy_save_location = os.path.join(ENERGY_OUTPUT, weather, severity, timestamp)
 
     if not os.path.exists(target_dir):
         print("ERROR: Directory does not exist! Check your spelling or timestamps.")
@@ -76,7 +82,6 @@ if __name__ == "__main__":
 
     print("Processing Complete!")
 
-    energy_save_location = os.path.join(ENERGY_OUTPUT, weather, severity, timestamp)
     save_energy_scores(frame_results, energy_save_location)
 
     print(f"Successfully calculated energy scores for {len(frame_results)} frames.")
