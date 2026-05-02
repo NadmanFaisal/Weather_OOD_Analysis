@@ -34,7 +34,7 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import LOGIT_OUTPUT, ENERGY_OUTPUT
 
-def compute_energy_score(logits: torch.Tensor, T: float = 1.0) -> torch.Tensor:
+def compute_energy_score(logits: torch.Tensor, T: float = 1.0, top_k = 300) -> torch.Tensor:
     """Compute the energy score for a batch of logits.
 
     Args:
@@ -49,9 +49,13 @@ def compute_energy_score(logits: torch.Tensor, T: float = 1.0) -> torch.Tensor:
         Real logits will be injected via a PyTorch forward hook in a later issue.
         This implementation operates on dummy logits for development and testing.
     """
-    query_scores = -T * torch.logsumexp(logits / T, dim=-1)
-    energy_score = query_scores.min()
-    return energy_score.detach()
+    energies = -T * torch.logsumexp(logits / T, dim=-1)
+    sorted_energies = torch.sort(energies)[0]
+
+    top_k_energies = sorted_energies[:, :top_k]
+    mean_energy = top_k_energies.mean()
+
+    return mean_energy.detach()
 
 def save_energy_scores(results: dict, save_dir: str):
     """Saves the calculated energy scores to a JSON file."""
