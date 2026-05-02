@@ -34,7 +34,7 @@ import torch
 from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from constants import LOGIT_OUTPUT
+from constants import FEATURE_LOGIT_OUTPUT
 
 class LogitHook:
     def __init__(self):
@@ -61,7 +61,7 @@ class LogitHook:
                 os.path.join(
                     current_dir, 
                     '../',
-                    LOGIT_OUTPUT,
+                    FEATURE_LOGIT_OUTPUT,
                     'nuscenes/',
                     timestamp
                 )
@@ -74,7 +74,7 @@ class LogitHook:
                 os.path.join(
                     current_dir, 
                     '../',
-                    LOGIT_OUTPUT,
+                    FEATURE_LOGIT_OUTPUT,
                     weather, 
                     severity, 
                     timestamp
@@ -86,18 +86,31 @@ class LogitHook:
         self.call_counts = {}
         self.handles = []
 
+        self.feature_cache = {}
+
     # TODO: Need to fix this to NOT create multiple folders when using multiple GPUs 
     #       for evaluation.
-    def get_logit(self, name):
+    def get_features_and_logits(self, name):
+        def hook(model, input, output):
+            pid = os.getpid()
+
+            self.feature_cache[pid] = {
+                'features': input[0].detach().cpu(),
+                'logits': output.detach().cpu()
+            }
+        return hook
+
+    # TODO: Need to fix this to NOT create multiple folders when using multiple GPUs 
+    #       for evaluation.
+    def get_metadata_and_save(self, name):
+        """OUTER HOOK: Grabs the sample_token, merges with cached features, and saves."""
         def hook(model, input, output):
             pid = os.getpid()
             current_batch = self.call_counts.get(name, 0)
 
-            # Prints once when hook is fired
             if current_batch  == 0:
-                print("\n HOOKS FIRED.\n")
+                print("\n MASTER LOGIT & FEATURE HOOKS FIRED.\n")
 
-            # Saves sample token of each frame to trace back where the logits are coming from
             sample_tokens = []
             
             for arg in input:
@@ -111,50 +124,51 @@ class LogitHook:
             if not sample_tokens:
                 sample_tokens = [f'unknown_batch_{current_batch}']
             
-            # Extracts the logits from the output detection head (defined in forward() method in bevformer's head file)
-            logits_tensor = None
-            if isinstance(output, dict):
-                logits_tensor = output.get('all_cls_scores', None)
-            elif isinstance(output, tuple) or isinstance(output, list):
-                logits_tensor = output[0]
-            
-            # Loads the logits into the CPU to save GPU from expanding too mucn
-            if logits_tensor is not None:
-
-                # Extract logit outputs from the last layer of the detection head
-                final_layer_logits = logits_tensor[-1].detach().cpu()
-
-                # Saves the data
+            if pid in self.feature_cache:
+                cached_data = self.feature_cache.pop(pid)
+                
+                # Saves BOTH features and logits
                 save_payload = {
                     'sample_token': sample_tokens[0],
-                    'logits': final_layer_logits
+                    'features': cached_data['features'],
+                    'logits': cached_data['logits']
                 }
                 
                 token_str = str(sample_tokens[0]).replace('/', '_')
-                filename = f"logits_token_{token_str}_gpu_{pid}.pt"
+                filename = f"payload_token_{token_str}_gpu_{pid}.pt"
                 save_path = os.path.join(self.save_dir, filename)
                 
                 torch.save(save_payload, save_path)
                 
                 self.call_counts[name] = current_batch + 1
+            else:
+                print(f"[!] WARNING: Metadata hook fired but no features found in cache for GPU {pid}!")
                 
         return hook
 
     # TODO: This method gets called multiple times due to multiple GPUs. Need to be fixed.
     def register_hook(self, model):
-
-        # Attach the hooks to the entire detection head
-        target_name = 'module.pts_bbox_head'
+        inner_target = 'module.pts_bbox_head.cls_branches.5'
+        outer_target = 'module.pts_bbox_head'
+        
         for name, module in model.named_modules():
-            if name == target_name:
-                handle = module.register_forward_hook(self.get_logit(name))
+            # Attach INNER Hook
+            if name == inner_target:
+                handle = module.register_forward_hook(self.get_features_and_logits(name))
                 self.handles.append(handle)
-                print(f"SUCCESSFULLY ATTACHED HOOK TO: {name}")
+                print(f"SUCCESSFULLY ATTACHED INNER FEATURE HOOK TO: {name}")
+                
+            # Attach OUTER Hook
+            elif name == outer_target:
+                handle = module.register_forward_hook(self.get_metadata_and_save(name))
+                self.handles.append(handle)
+                print(f"SUCCESSFULLY ATTACHED OUTER METADATA HOOK TO: {name}")
 
     def detach_hook(self):
         for handle in self.handles:
             handle.remove()
         self.handles = []
+        self.feature_cache.clear()
 
         total_saved = sum(self.call_counts.values())
         print(f"EVALUATION COMPLETE: GPU {os.getpid()} detached its hooks and successfully saved {total_saved} batches.")

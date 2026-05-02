@@ -80,10 +80,13 @@ OUTPUT_PKL_PATHS = [
 ]
 
 # Logits
-LOGIT_OUTPUT = 'data/intercepted_logits'
+FEATURE_LOGIT_OUTPUT = 'data/intercepted_feature_logits'
 
 # Energy Score
 ENERGY_OUTPUT = 'data/energy_scores'
+
+# Mahalanobis
+FEATURE_OUTPUT = 'data/features'
 
 # Used for our own custom corruption generation (Not Needed anymore)
 CORRUPTED_PKL = 'data/sets/nuscenes_corrupted/fog/nuscenes_infos_temporal_val.pkl'
