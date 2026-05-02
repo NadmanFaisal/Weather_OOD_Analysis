@@ -15,7 +15,47 @@
 /checkpoints/*.pth
 
 # Perception Models
-core_models/*
+core_models/*/data/
+
+core_models/*/ckpts/
+core_models/*/*.pth
+
+core_models/*/docs/
+core_models/*/figs/
+core_models/*/test/
+core_models/*/.dist_test/
+core_models/*/work_dirs/
+core_models/*/outputs/
+core_models/*/*.log
+
+core_models/*/projects/mmdet3d_plugin
+core_models/*/projects/configs/_base_
+core_models/*/projects/configs/bevformer_fp16
+core_models/*/projects/configs/bevformerv2
+core_models/*/projects/configs/datasets
+
+core_models/*/tools/analysis_tools
+core_models/*/tools/data_converter
+core_models/*/tools/fp16
+core_models/*/tools/misc
+core_models/*/tools/model_converters
+core_models/*/tools/create_data.py
+core_models/*/tools/dist_test.sh
+core_models/*/tools/dist_train.sh
+core_models/*/tools/train.py
+
+core_models/*/*.pkl
+
+core_models/*/__pycache__/
+core_models/*/*.pyc
+core_models/*/.pytest_cache/
+
+core_models/*/.vscode/
+core_models/*/.idea/
+core_models/*/.DS_Store
+core_models/*/.git
+
+core_models/mmdetection3d
 
 # checkpoints
 *.pth

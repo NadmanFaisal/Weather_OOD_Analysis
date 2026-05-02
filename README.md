@@ -395,7 +395,7 @@ nvidia-smi    # Should show your allocated GPU(s)
 ### Step 3: Run evaluation
 **Single-GPU evaluation:**
 ```bash
-PYTHONPATH=. ./tools/dist_test.sh \
+OOD_WEATHER=Clear OOD_SEVERITY=baseline PYTHONPATH=. ./tools/dist_test.sh \
     projects/configs/bevformer/bevformer_base.py \
     ckpts/bevformer_r101_dcn_24ep.pth \
     1 \
@@ -404,20 +404,17 @@ PYTHONPATH=. ./tools/dist_test.sh \
 **Multi-GPU evaluation** (request multiple GPUs in your `srun` command first):
 ```bash
 # BEVFormer Base with 4 GPUs
-PYTHONPATH=. ./tools/dist_test.sh \
+OOD_WEATHER=Clear OOD_SEVERITY=baseline PYTHONPATH=. ./tools/dist_test.sh \
     projects/configs/bevformer/bevformer_base.py \
     ckpts/bevformer_r101_dcn_24ep.pth \
     4 \
     --eval bbox
 ```
-**BEVFormer Tiny** (lighter model, faster inference):
-```bash
-PYTHONPATH=. ./tools/dist_test.sh \
-    projects/configs/bevformer/bevformer_tiny.py \
-    ckpts/bevformer_tiny_epoch_24.pth \
-    1 \
-    --eval bbox
-```
+> [!IMPORTANT]
+> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> The `OOD_WEATHER` can be `Clean` for clean dataset, or `Fog` or `Snow` (for corrupted dataset).
+> The `OOD_SEVERITY` can be `baseline` for clean dataset, or `easy`, `mid`, or `hard` (for corrupted dataset).
+
 > [!NOTE]
 > - The last number (1, 4, 8) must match the number of GPUs you requested in `srun`.
 > - Using **1 GPU** gives slightly higher scores because continuous video sequences are not truncated across GPU boundaries.
@@ -478,7 +475,7 @@ python scripts/build_shadow_nuscenes.py
 
 ## Run BEVFormer with corrupted data (Inference / Evaluation)
 Before we can forward feed the data into the perception models, we need to change a few things.
-### Step 1: Understanding which folder to navigate to
+### Step 1: Understanding which folder to navigate to (NEED TO BE CHANGED WHEN UNIFIED BEVFORMER FOLDER WILL BE DONE USING BUG BRANCH)
 In our `core_models` directory, we have 3 BEVFormer folders:
 ```
 core_models/
@@ -497,90 +494,7 @@ python scripts/patch_pkl.py
 > What does it do?
 >
 > Since BEVFormer cannot manually annotate the corrupted data as training images are missing (only val set images are present), we need to create copies of the clean data `nuscenes`'s `pkl` files and then manually change the paths specified inside to point towards the corrupted images in the correct directories.
-### Step 3: Change config file to point to the right directory
-We have already fixed major part of the config file to point to the right files. But one line needs to change depending on what data to evaluate on. For example if you want to evaluate `Snow/mid` dataset, navigate to `core_models/BEVFormer_Snow/projects/configs/bevformer/bevformer_base.py` and change the `data_root` to this:
-```python
-data_root = 'data/nuScenes-c/Snow/mid/'
-```
-If, suppose you want to run `Fog/mid` dataset, then navigate to `core_models/BEVFormer_Fog/projects/configs/bevformer/bevformer_base.py` and change the `data_root` to this:
-```python
-data_root = 'data/nuScenes-c/Fog/mid/'
-```
-
-<details>
-  <summary>How to change config for the models</summary>
-
-So that the model point to the correct location of the `pkl` file, we need to change the `data_root` variable to point to the right directory. On top of that, depending on the name of the generated `pkl` files, we also need to change each `ann_file` as the code example below (lines 162-226).
-```python
-dataset_type = 'CustomNuScenesDataset'
-data_root = 'data/nuScenes-c/Fog/hard/'
-file_client_args = dict(backend='disk')
-
-
-train_pipeline = [
-    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
-    dict(type='PhotoMetricDistortionMultiViewImage'),
-    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True, with_attr_label=False),
-    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectNameFilter', classes=class_names),
-    dict(type='NormalizeMultiviewImage', **img_norm_cfg),
-    dict(type='PadMultiViewImage', size_divisor=32),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='CustomCollect3D', keys=['gt_bboxes_3d', 'gt_labels_3d', 'img'])
-]
-
-test_pipeline = [
-    dict(type='LoadMultiViewImageFromFiles', to_float32=True),
-    dict(type='NormalizeMultiviewImage', **img_norm_cfg),
-    dict(type='PadMultiViewImage', size_divisor=32),
-    dict(
-        type='MultiScaleFlipAug3D',
-        img_scale=(1600, 900),
-        pts_scale_ratio=1,
-        flip=False,
-        transforms=[
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='CustomCollect3D', keys=['img'])
-        ])
-]
-
-data = dict(
-    samples_per_gpu=1,
-    workers_per_gpu=4,
-    train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file=data_root + 'nuscenes_infos_temporal_train.pkl',
-        pipeline=train_pipeline,
-        classes=class_names,
-        modality=input_modality,
-        test_mode=False,
-        use_valid_flag=True,
-        bev_size=(bev_h_, bev_w_),
-        queue_length=queue_length,
-        # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-        # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-        box_type_3d='LiDAR'),
-    val=dict(type=dataset_type,
-             data_root=data_root,
-             ann_file=data_root + 'nuscenes_infos_temporal_val.pkl',
-             pipeline=test_pipeline,  bev_size=(bev_h_, bev_w_),
-             classes=class_names, modality=input_modality, samples_per_gpu=1),
-    test=dict(type=dataset_type,
-              data_root=data_root,
-              ann_file=data_root + 'nuscenes_infos_temporal_val.pkl',
-              pipeline=test_pipeline, bev_size=(bev_h_, bev_w_),
-              classes=class_names, modality=input_modality),
-    shuffler_sampler=dict(type='DistributedGroupSampler'),
-    nonshuffler_sampler=dict(type='DistributedSampler')
-)
-```
-</details>
-
-### Step 4: Request a GPU compute node
+### Step 3: Request a GPU compute node
 
 Do **not** run inference on the login node — it will fail with `AssertionError`.
 
@@ -601,7 +515,7 @@ srun --account=NAISS2026-X-X --gpus-per-node=T4:1 --time=01:00:00 --pty /bin/bas
 
 </details>
 
-### Step 5: Set up the environment on the GPU node
+### Step 4: Set up the environment on the GPU node
 Once on the GPU node, set up the environment:
 ```bash
 conda activate bevformer
@@ -612,10 +526,10 @@ Verify GPU access:
 ```bash
 nvidia-smi    # Should show your allocated GPU(s)
 ```
-### Step 6: Run evaluation
+### Step 5: Run evaluation
 **Single-GPU evaluation:**
 ```bash
-PYTHONPATH=. ./tools/dist_test.sh \
+OOD_WEATHER=Snow OOD_SEVERITY=hard PYTHONPATH=. ./tools/dist_test.sh \
     projects/configs/bevformer/bevformer_base.py \
     ckpts/bevformer_r101_dcn_24ep.pth \
     1 \
@@ -624,16 +538,31 @@ PYTHONPATH=. ./tools/dist_test.sh \
 **Multi-GPU evaluation** (request multiple GPUs in your `srun` command first):
 ```bash
 # BEVFormer Base with 4 GPUs
-PYTHONPATH=. ./tools/dist_test.sh \
+OOD_WEATHER=Snow OOD_SEVERITY=hard PYTHONPATH=. ./tools/dist_test.sh \
     projects/configs/bevformer/bevformer_base.py \
     ckpts/bevformer_r101_dcn_24ep.pth \
     4 \
     --eval bbox
 ```
+> [!IMPORTANT]
+> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clean` for clean dataset.
+> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+
 > [!NOTE]
 > - The last number (1, 4, 8) must match the number of GPUs you requested in `srun`.
 > - Using **1 GPU** gives slightly higher scores because continuous video sequences are not truncated across GPU boundaries.
 > - Always use `PYTHONPATH=.` to ensure BEVFormer's custom modules are importable.
 > - When done, type `exit` to release the GPU node and stop billing your allocation.
-### Step 7: Check evaluation results
+### Step 6: Check evaluation results
 You can check the evaluation results at the `test/bevformer_base/[DATE]/pts_bbox` directory.
+## Logits and Energy Scores
+Right now, to run any sort of inference and evaluation, please use `BEVFormer_Fog`.
+
+When the evaluation phases are done, logits are intercepted and stored under `data/intercepted_logits` directory under our root.
+
+To generate energy scores, run the following command:
+```
+python safety_monitor/energy_score.py
+```
+This will generate energy scores and store them under `data/energy_scores` under our root.

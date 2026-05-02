@@ -79,6 +79,12 @@ OUTPUT_PKL_PATHS = [
     'data/sets/nuscenes-c/nuScenes-c/Snow/hard/nuscenes_infos_temporal_val.pkl',
 ]
 
+# Logits
+LOGIT_OUTPUT = 'data/intercepted_logits'
+
+# Energy Score
+ENERGY_OUTPUT = 'data/energy_scores'
+
 # Used for our own custom corruption generation (Not Needed anymore)
 CORRUPTED_PKL = 'data/sets/nuscenes_corrupted/fog/nuscenes_infos_temporal_val.pkl'
 OUTPUT_PKL = 'data/sets/nuscenes_combined/nuscenes_infos_temporal_MIXED_val.pkl'
