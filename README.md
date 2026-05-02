@@ -561,6 +561,12 @@ When the evaluation phases are done, logits are intercepted and stored under `da
 
 To generate energy scores, run the following command:
 ```
-python safety_monitor/energy_score.py
+OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME python safety_monitor/energy_score.py
 ```
 This will generate energy scores and store them under `data/energy_scores` under our root.
+> [!IMPORTANT]
+> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
+> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_logits/{target_folder}/`
+
