@@ -86,7 +86,7 @@ FEATURE_LOGIT_OUTPUT = 'data/intercepted_feature_logits'
 ENERGY_OUTPUT = 'data/energy_scores'
 
 # Mahalanobis
-FEATURE_OUTPUT = 'data/features'
+FEATURE_OUTPUT = 'data/mahalanobis_distances'
 
 # Used for our own custom corruption generation (Not Needed anymore)
 CORRUPTED_PKL = 'data/sets/nuscenes_corrupted/fog/nuscenes_infos_temporal_val.pkl'

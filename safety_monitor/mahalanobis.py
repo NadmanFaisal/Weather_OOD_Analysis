@@ -118,7 +118,7 @@ if __name__ == "__main__":
             # Save parameters for future corrupted evaluations
             os.makedirs(os.path.dirname(baseline_param_file), exist_ok=True)
             torch.save({'mean': mean, 'inv_cov': inv_cov}, baseline_param_file)
-            print(f"✅ Baseline parameters saved to: {baseline_param_file}\n")
+            print(f"Baseline parameters saved to: {baseline_param_file}\n")
 
     # ==========================================
     # PHASE 2: LOAD THE BASELINE (Corrupted Data)
