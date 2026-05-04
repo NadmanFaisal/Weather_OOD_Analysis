@@ -5,8 +5,11 @@
 *.deb
 
 # Datasets
-/data/
-/datasets/
+data/sets
+data/energy_scores
+data/intercepted_feature_logits
+data/mahalanobis_distances
+
 *.tar
 *.tgz
 *.gz
