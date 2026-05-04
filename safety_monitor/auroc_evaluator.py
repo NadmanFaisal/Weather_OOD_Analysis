@@ -72,6 +72,21 @@ if __name__ == "__main__":
         if not os.path.exists(ood_maha_path): 
             print(f"\tMissing OOD: {ood_maha_path}")
 
+    # Evaluate Energy Score
+    if os.path.exists(id_energy_path) and os.path.exists(ood_energy_path):
+        id_energy_scores = get_json_scores(id_energy_path)
+        ood_energy_scores = get_json_scores(ood_energy_path)
+        
+        energy_auroc = get_auroc_score(id_energy_scores, ood_energy_scores, "Energy Score")
+        if energy_auroc is not None:
+            results['Energy Score'] = energy_auroc
+            print(f"Energy Scores Loaded -> ID: {len(id_energy_scores)} frames | OOD: {len(ood_energy_scores)} frames")
+    else:
+        print("[!] Missing Energy JSON files. Skipping metric.")
+        if not os.path.exists(id_energy_path): 
+            print(f"\tMissing ID: {id_energy_path}")
+        if not os.path.exists(ood_energy_path): 
+            print(f"\tMissing OOD: {ood_energy_path}")
 
     # Print the final benchmarks
     print("\n---------------- FINAL AUROC ---------------------")
