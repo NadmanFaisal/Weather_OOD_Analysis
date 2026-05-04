@@ -1,6 +1,10 @@
+# src: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html
+
 import os
 import sys
 import json
+import numpy as np
+from sklearn.metrics import roc_auc_score
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import FEATURE_OUTPUT, ENERGY_OUTPUT
@@ -12,7 +16,19 @@ def get_json_scores(file):
 
     return list(data.values())
 
-# def get_auroc_score():
+def get_auroc_score(id_scores, ood_scores, metric_name):
+    id_labels = np.zeros(len(id_scores))
+    ood_labels = np.ones(len(ood_scores))
+
+    y_true = np.concatenate([id_labels, ood_labels])
+    y_score = np.concatenate([id_scores, ood_scores])
+
+    try:
+        auroc = roc_auc_score(y_true, y_score)
+        return auroc
+    except Exception as e:
+        print(f"[!] Error calculating AUROC for {metric_name}: {e}")
+        return None
 
 if __name__ == "__main__":
     weather = os.environ.get('OOD_WEATHER')
@@ -38,5 +54,29 @@ if __name__ == "__main__":
     id_energy_scores = get_json_scores(id_energy_path)
     ood_energy_scores = get_json_scores(ood_energy_path)
 
-    print("ID Mahalanobis Distances:", id_maha_scores)
-    print("ID Energy Scores:", id_energy_scores)
+    results = {}
+
+    # Evaluate Mahalanobis Distance
+    if os.path.exists(id_maha_path) and os.path.exists(ood_maha_path):
+        id_maha_scores = get_json_scores(id_maha_path)
+        ood_maha_scores = get_json_scores(ood_maha_path)
+        
+        maha_auroc = get_auroc_score(id_maha_scores, ood_maha_scores, "Mahalanobis")
+        if maha_auroc is not None:
+            results['Mahalanobis Distance'] = maha_auroc
+            print(f"Mahalanobis Distances Loaded -> ID: {len(id_maha_scores)} frames | OOD: {len(ood_maha_scores)} frames")
+    else:
+        print("[!] Missing Mahalanobis JSON files. Skipping metric.")
+        if not os.path.exists(id_maha_path): 
+            print(f"\tMissing ID: {id_maha_path}")
+        if not os.path.exists(ood_maha_path): 
+            print(f"\tMissing OOD: {ood_maha_path}")
+
+
+    # Print the final benchmarks
+    print("\n---------------- FINAL AUROC ---------------------")
+    if not results:
+        print("No valid scores were found to evaluate. Please check the paths above.")
+    else:
+        for metric, auroc in results.items():
+            print(f"{metric}: {auroc}")
