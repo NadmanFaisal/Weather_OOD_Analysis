@@ -5,8 +5,8 @@
 *.deb
 
 # Datasets
-/data/
-/datasets/
+data/
+
 *.tar
 *.tgz
 *.gz

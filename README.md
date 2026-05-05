@@ -401,6 +401,9 @@ OOD_WEATHER=Clear OOD_SEVERITY=baseline PYTHONPATH=. ./tools/dist_test.sh \
     1 \
     --eval bbox
 ```
+### Step 4: Check evaluation results
+You can check the evaluation results at the `test/bevformer_base/[DATE]/pts_bbox` directory.
+
 **Multi-GPU evaluation** (request multiple GPUs in your `srun` command first):
 ```bash
 # BEVFormer Base with 4 GPUs
@@ -410,6 +413,8 @@ OOD_WEATHER=Clear OOD_SEVERITY=baseline PYTHONPATH=. ./tools/dist_test.sh \
     4 \
     --eval bbox
 ```
+### Step 4: Check evaluation results
+You can check the evaluation results at the `test/bevformer_base/[DATE]/pts_bbox` directory.
 > [!IMPORTANT]
 > The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
 > The `OOD_WEATHER` can be `Clear` for clean dataset, or `Fog` or `Snow` (for corrupted dataset).
@@ -559,7 +564,7 @@ When the evaluation phases are done, logits and latent feature maps are intercep
 
 ### Generate Energy Scores
 To generate energy scores, run the following command:
-```
+```bash
 OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME python safety_monitor/energy_score.py
 ```
 This will generate energy scores (`.json`) and store them under `data/energy_scores` under our root.
@@ -570,16 +575,29 @@ This will generate energy scores (`.json`) and store them under `data/energy_sco
 > For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 ### Generate Mahalanobis Distances
 To generate baseline Mahalanobis distance:
-```
+```bash
 OOD_WEATHER=Clear OOD_SEVERITY=baseline OOD_TIMESTAMP=DATE_TIME python safety_monitor/mahalanobis.py
 ```
 This will generate the baseline mathematical parameters (`mahalanobis_baseline.pt`) and store them under `data/features/nuscenes/{timestamp}`. It will also generate the baseline score evaluations and store them under `data/mahalanobis_scores/nuscenes/{timestamp}`.
 
 To generate Mahalanobis distances of corrupted data (or also clean dataset):
-```
+```bash
 OOD_WEATHER=[WEATHER] OOD_SEVERITY=[SEVERITY] OOD_TIMESTAMP=[DATE_TIME] BASELINE_TIMESTAMP=[DATE_TIME] python safety_monitor/mahalanobis.py
 ```
 This will output the final evaluated `.json` scores to `data/mahalanobis_scores/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`.
+> [!IMPORTANT]
+> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
+> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
+> For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+## AUROC & FPR95 Evaluations
+### AUROC Evaluation
+To run get auroc scores, run the following file:
+```
+OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME BASELINE_TIMESTAMP=DATE_TIME python safety_monitor/auroc_evaluator.py
+```
+This will output the final evaluated `.json` scores to `plots/auroc/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`.
 > [!IMPORTANT]
 > The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
 > The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.

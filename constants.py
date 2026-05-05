@@ -88,6 +88,10 @@ ENERGY_OUTPUT = 'data/energy_scores'
 # Mahalanobis
 FEATURE_OUTPUT = 'data/mahalanobis_distances'
 
+# Data Plots
+AUROC_PLOT_OUTPUT = 'plots/auroc'
+FPR95_PLOT_OUTPUT = 'plots/fpr95'
+
 # Used for our own custom corruption generation (Not Needed anymore)
 CORRUPTED_PKL = 'data/sets/nuscenes_corrupted/fog/nuscenes_infos_temporal_val.pkl'
 OUTPUT_PKL = 'data/sets/nuscenes_combined/nuscenes_infos_temporal_MIXED_val.pkl'
