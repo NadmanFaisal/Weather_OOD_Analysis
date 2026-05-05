@@ -36,6 +36,33 @@ def get_auroc_score(id_scores, ood_scores, metric_name):
         print(f"[!] Error calculating AUROC for {metric_name}: {e}")
         return None, None
 
+# Generated code
+def plot_fpr95_bar_chart(results: dict, weather: str, severity: str, save_dir: str):
+    plt.figure(figsize=(6, 6))
+    
+    metrics = list(results.keys())
+    fpr95_values = [results[m] for m in metrics]
+    colors = ['darkorange', 'cornflowerblue']
+
+    bars = plt.bar(metrics, fpr95_values, color=colors[:len(metrics)], width=0.5)
+
+    plt.ylim([0.0, 1.05])
+    plt.ylabel('FPR95 (Lower is Better)')
+    plt.title(f'FPR95 Evaluation: {weather.capitalize()} ({severity.capitalize()})')
+    
+    plt.axhline(y=0.05, color='red', linestyle='--', alpha=0.5, label='Ideal FPR (5%)')
+    plt.legend()
+    plt.grid(axis='y', alpha=0.3)
+
+    plt.bar_label(bars, fmt='%.4f', padding=3)
+
+    os.makedirs(save_dir, exist_ok=True)
+    file_path = os.path.join(save_dir, f"fpr95_bar_{weather}_{severity}.png")
+    
+    plt.savefig(file_path, dpi=300, bbox_inches='tight')
+    print(f"[*] FPR95 Bar Chart saved successfully to: {file_path}")
+    plt.close()
+
 if __name__ == "__main__":
     weather = os.environ.get('OOD_WEATHER')
     severity = os.environ.get('OOD_SEVERITY')
@@ -93,6 +120,10 @@ if __name__ == "__main__":
             print(f"\tMissing ID: {id_energy_path}")
         if not os.path.exists(ood_energy_path): 
             print(f"\tMissing OOD: {ood_energy_path}")
+
+    if results:
+        save_dir = os.path.join(FPR95_PLOT_OUTPUT, weather, severity, timestamp)
+        plot_fpr95_bar_chart(results, weather, severity, save_dir)
 
     # Print the final benchmarks
     print("\n---------------- FINAL AUROC ---------------------")
