@@ -597,11 +597,23 @@ To run get auroc scores, run the following file:
 ```
 OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME BASELINE_TIMESTAMP=DATE_TIME python safety_monitor/auroc_evaluator.py
 ```
-This will output the final evaluated `.json` scores to `plots/auroc/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`.
+This will output the final evaluated `.png` plots to `plots/auroc/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`.
 > [!IMPORTANT]
 > The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset).
+> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
+> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
+> For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+### FPR_95 Evaluation
+To run get FPR95 scores, run the following file:
+```
+OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME BASELINE_TIMESTAMP=DATE_TIME python safety_monitor/fpr95_evaluator.py
+```
+This will output the final evaluated `.png` plots to `plots/fpr95/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`.
+> [!IMPORTANT]
+> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> The `OOD_WEATHER` can be `Fog` or `Snow`.
+> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
 > For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 > For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
 
