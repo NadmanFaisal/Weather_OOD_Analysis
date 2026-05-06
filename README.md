@@ -559,9 +559,8 @@ OOD_WEATHER=Snow OOD_SEVERITY=hard PYTHONPATH=. ./tools/dist_test.sh \
 > - When done, type `exit` to release the GPU node and stop billing your allocation.
 ### Step 6: Check evaluation results
 You can check the evaluation results at the `test/bevformer_base/[DATE]/pts_bbox` directory.
-## Mahalanobid Distance and Energy Scores
+## Mahalanobis Distance and Energy Scores
 When the evaluation phases are done, logits and latent feature maps are intercepted and stored under `data/intercepted_feature_logits` directory under our root.
-
 ### Generate Energy Scores
 To generate energy scores, run the following command:
 ```bash
@@ -574,46 +573,91 @@ This will generate energy scores (`.json`) and store them under `data/energy_sco
 > The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
 > For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 ### Generate Mahalanobis Distances
-To generate baseline Mahalanobis distance:
+To generate **Raw** baseline Mahalanobis distance:
 ```bash
 OOD_WEATHER=Clear OOD_SEVERITY=baseline OOD_TIMESTAMP=DATE_TIME python safety_monitor/mahalanobis.py
 ```
 This will generate the baseline mathematical parameters (`mahalanobis_baseline.pt`) and store them under `data/features/nuscenes/{timestamp}`. It will also generate the baseline score evaluations and store them under `data/mahalanobis_scores/nuscenes/{timestamp}`.
-
-To generate Mahalanobis distances of corrupted data (or also clean dataset):
+To generate **Normalized** Mahalanobis distance:
 ```bash
-OOD_WEATHER=[WEATHER] OOD_SEVERITY=[SEVERITY] OOD_TIMESTAMP=[DATE_TIME] BASELINE_TIMESTAMP=[DATE_TIME] python safety_monitor/mahalanobis.py
+NORMALIZATION=true OOD_WEATHER=Clear OOD_SEVERITY=baseline OOD_TIMESTAMP=DATE_TIME python safety_monitor/mahalanobis.py
 ```
-This will output the final evaluated `.json` scores to `data/mahalanobis_scores/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`.
+This will generate the baseline mathematical parameters (`mahalanobis_baseline.pt`) and store them under `data/features/nuscenes/{timestamp}`. It will also generate the baseline score evaluations and store them under `data/mahalanobis_scores/nuscenes/{timestamp}`.
 > [!IMPORTANT]
+> The `NORMALIZATION`` variable defaults to false. Setting it to true applies Global Average Pooling and L2 Normalization to the feature vectors, and automatically routes all saved files to a dedicated `normalized/` sub-folder to prevent overwriting your raw data.
+> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
+> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/nuscenes/{timestamp}`
+To generate Mahalanobis distances of corrupted data (or also clean dataset), Raw or Normalized:
+```bash
+# Raw
+OOD_WEATHER=[WEATHER] OOD_SEVERITY=[SEVERITY] OOD_TIMESTAMP=[DATE_TIME] BASELINE_TIMESTAMP=[DATE_TIME] python safety_monitor/mahalanobis.py
+
+#Normalized
+NORMALIZATION=true OOD_WEATHER=[WEATHER] OOD_SEVERITY=[SEVERITY] OOD_TIMESTAMP=[DATE_TIME] BASELINE_TIMESTAMP=[DATE_TIME] python safety_monitor/mahalanobis.py
+```
+This will output the final raw evaluated `.json` scores to `data/mahalanobis_scores/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`, or if normalized, then to `data/mahalanobis_scores/{OOD_WEATHER}/normalized/{OOD_SEVERITY}/{OOD_TIMESTAMP}`
+> [!IMPORTANT]
+> The `NORMALIZATION`` variable defaults to false. Setting it to true applies Global Average Pooling and L2 Normalization to the feature vectors, and automatically routes all saved files to a dedicated `normalized/` sub-folder to prevent overwriting your raw data.
 > The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
 > The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
 > The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
 > For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 > For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+### Overall Folder Structure
+```
+data/
+└── mahalanobis_distances/
+    ├── nuscenes/
+    │   ├── 1111/
+    │   │   ├── mahalanobis_baseline.pt               <-- (Raw Math)
+    │   │   ├── mahalanobis_baseline_normalized.pt    <-- (Normalized Math)
+    │   │   └── mahalanobis_distances.json            <-- (Raw Scores)
+    │   └── normalized/
+    │       └── 1111/
+    │           └── mahalanobis_distances.json        <-- (Normalized Scores)
+    │
+    └── Fog/
+        └── easy/
+            ├── 2222/
+            │   └── mahalanobis_distances.json        <-- (Raw Scores)
+            └── normalized/
+                └── 2222/
+                    └── mahalanobis_distances.json    <-- (Normalized Scores)
+```
 ## AUROC & FPR95 Evaluations
 ### AUROC Evaluation
-To run get auroc scores, run the following file:
-```
+To get AUROC scores and generate ROC curve plots, run the following command:
+```bash
+# Raw Evaluation
 OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME BASELINE_TIMESTAMP=DATE_TIME python safety_monitor/auroc_evaluator.py
+
+# Normalized Evaluation
+NORMALIZATION=true OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME BASELINE_TIMESTAMP=DATE_TIME python safety_monitor/auroc_evaluator.py
 ```
-This will output the final evaluated `.png` plots to `plots/auroc/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`.
+This will output the final evaluated `.png` plots to `plots/auroc/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}` (or the `normalized/` subdirectory).
 > [!IMPORTANT]
+> Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
 > The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
 > The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset).
 > The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
 > For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 > For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
 ### FPR_95 Evaluation
-To run get FPR95 scores, run the following file:
-```
+To run get FPR95 scores, run the following command:
+```bash
+# Raw Evaluation
 OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME BASELINE_TIMESTAMP=DATE_TIME python safety_monitor/fpr95_evaluator.py
+
+# Normalized Evaluation
+NORMALIZATION=true OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME BASELINE_TIMESTAMP=DATE_TIME python safety_monitor/fpr95_evaluator.py
 ```
-This will output the final evaluated `.png` plots to `plots/fpr95/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`.
+This will output the final evaluated `.png` plots to `plots/fpr95/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}` (or the `normalized/` subdirectory).
 > [!IMPORTANT]
+> Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
 > The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
 > The `OOD_WEATHER` can be `Fog` or `Snow`.
 > The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
 > For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 > For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
-
