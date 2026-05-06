@@ -416,9 +416,9 @@ OOD_WEATHER=Clear OOD_SEVERITY=baseline PYTHONPATH=. ./tools/dist_test.sh \
 ### Step 4: Check evaluation results
 You can check the evaluation results at the `test/bevformer_base/[DATE]/pts_bbox` directory.
 > [!IMPORTANT]
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Clear` for clean dataset, or `Fog` or `Snow` (for corrupted dataset).
-> The `OOD_SEVERITY` can be `baseline` for clean dataset, or `easy`, `mid`, or `hard` (for corrupted dataset).
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Clear` for clean dataset, or `Fog` or `Snow` (for corrupted dataset).
+> - The `OOD_SEVERITY` can be `baseline` for clean dataset, or `easy`, `mid`, or `hard` (for corrupted dataset).
 
 > [!NOTE]
 > - The last number (1, 4, 8) must match the number of GPUs you requested in `srun`.
@@ -548,9 +548,9 @@ OOD_WEATHER=Snow OOD_SEVERITY=hard PYTHONPATH=. ./tools/dist_test.sh \
     --eval bbox
 ```
 > [!IMPORTANT]
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
+> - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
 
 > [!NOTE]
 > - The last number (1, 4, 8) must match the number of GPUs you requested in `srun`.
@@ -568,27 +568,28 @@ OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_TIME python safety_
 ```
 This will generate energy scores (`.json`) and store them under `data/energy_scores` under our root.
 > [!IMPORTANT]
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
-> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
+> - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+> - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 ### Generate Mahalanobis Distances
 To generate **Raw** baseline Mahalanobis distance:
 ```bash
 OOD_WEATHER=Clear OOD_SEVERITY=baseline OOD_TIMESTAMP=DATE_TIME python safety_monitor/mahalanobis.py
 ```
 This will generate the baseline mathematical parameters (`mahalanobis_baseline.pt`) and store them under `data/features/nuscenes/{timestamp}`. It will also generate the baseline score evaluations and store them under `data/mahalanobis_scores/nuscenes/{timestamp}`.
+
 To generate **Normalized** Mahalanobis distance:
 ```bash
 NORMALIZATION=true OOD_WEATHER=Clear OOD_SEVERITY=baseline OOD_TIMESTAMP=DATE_TIME python safety_monitor/mahalanobis.py
 ```
 This will generate the baseline mathematical parameters (`mahalanobis_baseline.pt`) and store them under `data/features/nuscenes/{timestamp}`. It will also generate the baseline score evaluations and store them under `data/mahalanobis_scores/nuscenes/{timestamp}`.
 > [!IMPORTANT]
-> The `NORMALIZATION`` variable defaults to false. Setting it to true applies Global Average Pooling and L2 Normalization to the feature vectors, and automatically routes all saved files to a dedicated `normalized/` sub-folder to prevent overwriting your raw data.
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
-> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/nuscenes/{timestamp}`
+> - The `NORMALIZATION` variable defaults to false. Setting it to true applies Global Average Pooling and L2 Normalization to the feature vectors, and automatically routes all saved files to a dedicated `normalized/` sub-folder to prevent overwriting your raw data.
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
+> - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+> - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/nuscenes/{timestamp}`
 To generate Mahalanobis distances of corrupted data (or also clean dataset), Raw or Normalized:
 ```bash
 # Raw
@@ -599,12 +600,12 @@ NORMALIZATION=true OOD_WEATHER=[WEATHER] OOD_SEVERITY=[SEVERITY] OOD_TIMESTAMP=[
 ```
 This will output the final raw evaluated `.json` scores to `data/mahalanobis_scores/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}`, or if normalized, then to `data/mahalanobis_scores/{OOD_WEATHER}/normalized/{OOD_SEVERITY}/{OOD_TIMESTAMP}`
 > [!IMPORTANT]
-> The `NORMALIZATION`` variable defaults to false. Setting it to true applies Global Average Pooling and L2 Normalization to the feature vectors, and automatically routes all saved files to a dedicated `normalized/` sub-folder to prevent overwriting your raw data.
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
-> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
-> For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+> - The `NORMALIZATION`` variable defaults to false. Setting it to true applies Global Average Pooling and L2 Normalization to the feature vectors, and automatically routes all saved files to a dedicated `normalized/` sub-folder to prevent overwriting your raw data.
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset), or `Clear` for clean dataset.
+> - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset) or `baseline` for clean dataset.
+> - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
+> - For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
 ### Overall Folder Structure
 ```
 data/
