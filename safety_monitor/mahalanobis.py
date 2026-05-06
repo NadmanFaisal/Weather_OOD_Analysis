@@ -4,6 +4,7 @@ import os
 import glob
 import json
 
+from gap_l2_normalization import apply_feature_regularization
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import FEATURE_LOGIT_OUTPUT, FEATURE_OUTPUT
 
@@ -49,6 +50,7 @@ if __name__ == "__main__":
     weather = os.environ.get('OOD_WEATHER')
     severity = os.environ.get('OOD_SEVERITY')
     timestamp = os.environ.get('OOD_TIMESTAMP')
+    normalization = os.environ.get('NORMALIZATION', 'False').lower() in ('true', '1', 't')
 
     # ==========================================
     # DYNAMIC ROUTING & TIMESTAMP LOGIC
@@ -61,12 +63,22 @@ if __name__ == "__main__":
 
     if weather == "Clear" and severity == "baseline":
         target_dir = os.path.join(FEATURE_LOGIT_OUTPUT, "nuscenes", timestamp)
-        feature_save_location = os.path.join(FEATURE_OUTPUT, "nuscenes", timestamp)
+
+        if normalization:
+            feature_save_location = os.path.join(FEATURE_OUTPUT, "nuscenes", "normalized", timestamp)
+        else:
+            feature_save_location = os.path.join(FEATURE_OUTPUT, "nuscenes", timestamp)
+    
         baseline_timestamp = timestamp
 
     else:
         target_dir = os.path.join(FEATURE_LOGIT_OUTPUT, weather, severity, timestamp)
-        feature_save_location = os.path.join(FEATURE_OUTPUT, weather, severity, timestamp)
+
+        if normalization:
+            feature_save_location = os.path.join(FEATURE_OUTPUT, weather, severity, "normalized", timestamp)
+        else:
+            feature_save_location = os.path.join(FEATURE_OUTPUT, weather, severity, timestamp)
+        
         baseline_timestamp = os.environ.get('BASELINE_TIMESTAMP')
 
         if not baseline_timestamp:
@@ -83,7 +95,10 @@ if __name__ == "__main__":
         print("No .pt files found in the target directory.")
         sys.exit(1)
 
-    baseline_param_file = os.path.join(FEATURE_OUTPUT, "nuscenes", baseline_timestamp, "mahalanobis_baseline.pt")
+    if normalization:
+        baseline_param_file = os.path.join(FEATURE_OUTPUT, "nuscenes", "normalized", baseline_timestamp, "mahalanobis_baseline.pt")
+    else:
+        baseline_param_file = os.path.join(FEATURE_OUTPUT, "nuscenes", baseline_timestamp, "mahalanobis_baseline.pt")
 
     mean = None
     inv_cov = None
@@ -107,15 +122,17 @@ if __name__ == "__main__":
                 try:
                     loaded_data = torch.load(file_path, map_location='cpu')
                     feats = extract_confident_features(loaded_data['features'], loaded_data['logits'])
+
+                    if normalization:
+                        feats = apply_feature_regularization(feats, use_gap=True, use_l2=True)
+
                     all_features_list.append(feats)
                 except Exception as e:
                     print(f"Failed to read {file_path} for fitting: {e}")
                 
-            # Stack everything to calculate the global mean and covariance
             all_features_tensor = torch.cat(all_features_list, dim=0)
             mean, inv_cov = fit_mahalanobis_parameters(all_features_tensor)
         
-            # Save parameters for future corrupted evaluations
             os.makedirs(os.path.dirname(baseline_param_file), exist_ok=True)
             torch.save({'mean': mean, 'inv_cov': inv_cov}, baseline_param_file)
             print(f"Baseline parameters saved to: {baseline_param_file}\n")
@@ -148,6 +165,9 @@ if __name__ == "__main__":
             logits_tensor = loaded_data['logits']
 
             valid_features = extract_confident_features(features_tensor, logits_tensor)
+
+            if normalization:
+                valid_features = apply_feature_regularization(valid_features, use_gap=True, use_l2=True)
             score = compute_mahalanobis_distance(valid_features, mean, inv_cov)
 
             frame_results[sample_token] = score

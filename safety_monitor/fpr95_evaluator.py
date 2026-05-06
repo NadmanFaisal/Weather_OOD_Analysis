@@ -37,7 +37,7 @@ def get_auroc_score(id_scores, ood_scores, metric_name):
         return None, None
 
 # Generated code
-def plot_fpr95_bar_chart(results: dict, weather: str, severity: str, save_dir: str):
+def plot_fpr95_bar_chart(results: dict, weather: str, severity: str, save_dir: str, is_normalized: bool):
     plt.figure(figsize=(6, 6))
     
     metrics = list(results.keys())
@@ -48,7 +48,9 @@ def plot_fpr95_bar_chart(results: dict, weather: str, severity: str, save_dir: s
 
     plt.ylim([0.0, 1.05])
     plt.ylabel('FPR95 (Lower is Better)')
-    plt.title(f'FPR95 Evaluation: {weather.capitalize()} ({severity.capitalize()})')
+
+    title_suffix = " (Normalized)" if is_normalized else " (Raw)"
+    plt.title(f'FPR95 Evaluation: {weather.capitalize()} ({severity.capitalize()}){title_suffix}')
     
     plt.axhline(y=0.05, color='red', linestyle='--', alpha=0.5, label='Ideal FPR (5%)')
     plt.legend()
@@ -68,15 +70,20 @@ if __name__ == "__main__":
     severity = os.environ.get('OOD_SEVERITY')
     timestamp = os.environ.get('OOD_TIMESTAMP')
     baseline_timestamp = os.environ.get('BASELINE_TIMESTAMP')
+    normalization = os.environ.get('NORMALIZATION', 'False').lower() in ('true', '1', 't')
 
     if not all([weather, severity, timestamp, baseline_timestamp]):
         print("\n[!] CRITICAL ERROR: Missing Environment Variables.")
         print("Please run the script like this:")
-        print("BASELINE_TIMESTAMP=20260502_220411 OOD_WEATHER=Fog OOD_SEVERITY=hard OOD_TIMESTAMP=... python safety_monitor/auroc_evaluator.py\n")
+        print("BASELINE_TIMESTAMP=20260502_220411 OOD_WEATHER=Fog OOD_SEVERITY=hard OOD_TIMESTAMP=... python safety_monitor/fpr95_evaluator.py\n")
         sys.exit(1)
 
-    id_maha_path = os.path.join(FEATURE_OUTPUT, "nuscenes", baseline_timestamp, "mahalanobis_distances.json")
-    ood_maha_path = os.path.join(FEATURE_OUTPUT, weather, severity, timestamp, "mahalanobis_distances.json")
+    if normalization:
+        id_maha_path = os.path.join(FEATURE_OUTPUT, "nuscenes", "normalized", baseline_timestamp, "mahalanobis_distances.json")
+        ood_maha_path = os.path.join(FEATURE_OUTPUT, weather, severity, "normalized", timestamp, "mahalanobis_distances.json")
+    else:
+        id_maha_path = os.path.join(FEATURE_OUTPUT, "nuscenes", baseline_timestamp, "mahalanobis_distances.json")
+        ood_maha_path = os.path.join(FEATURE_OUTPUT, weather, severity, timestamp, "mahalanobis_distances.json")
 
     id_energy_path = os.path.join(ENERGY_OUTPUT, "nuscenes", baseline_timestamp, "energy_scores.json")
     ood_energy_path = os.path.join(ENERGY_OUTPUT, weather, severity, timestamp, "energy_scores.json")
@@ -122,11 +129,16 @@ if __name__ == "__main__":
             print(f"\tMissing OOD: {ood_energy_path}")
 
     if results:
-        save_dir = os.path.join(FPR95_PLOT_OUTPUT, weather, severity, timestamp)
-        plot_fpr95_bar_chart(results, weather, severity, save_dir)
+
+        if normalization:
+            save_dir = os.path.join(FPR95_PLOT_OUTPUT, weather, severity, "normalized", timestamp)
+        else:
+            save_dir = os.path.join(FPR95_PLOT_OUTPUT, weather, severity, timestamp)
+
+        plot_fpr95_bar_chart(results, weather, severity, save_dir, normalization)
 
     # Print the final benchmarks
-    print("\n---------------- FINAL AUROC ---------------------")
+    print("\n---------------- FINAL FPR95 ---------------------")
     if not results:
         print("No valid scores were found to evaluate. Please check the paths above.")
     else:

@@ -34,7 +34,7 @@ def get_auroc_score(id_scores, ood_scores, metric_name):
         return None, None, None
 
 # Generated code
-def plot_roc_curves(curve_data: dict, weather: str, severity: str, save_dir):
+def plot_roc_curves(curve_data: dict, weather: str, severity: str, save_dir, is_normalized: bool):
     plt.figure(figsize=(8, 6))
     
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess (0.50)')
@@ -54,7 +54,10 @@ def plot_roc_curves(curve_data: dict, weather: str, severity: str, save_dir):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate (FPR)')
     plt.ylabel('True Positive Rate (TPR)')
-    plt.title(f'OOD Detection ROC Curve: {weather.capitalize()} ({severity.capitalize()})')
+
+    title_suffix = " (Normalized)" if is_normalized else " (Raw)"
+    plt.title(f'OOD Detection ROC Curve: {weather.capitalize()} ({severity.capitalize()}){title_suffix}')
+
     plt.legend(loc="lower right")
     plt.grid(alpha=0.3)
 
@@ -70,6 +73,7 @@ if __name__ == "__main__":
     severity = os.environ.get('OOD_SEVERITY')
     timestamp = os.environ.get('OOD_TIMESTAMP')
     baseline_timestamp = os.environ.get('BASELINE_TIMESTAMP')
+    normalization = os.environ.get('NORMALIZATION', 'False').lower() in ('true', '1', 't')
 
     if not all([weather, severity, timestamp, baseline_timestamp]):
         print("\n[!] CRITICAL ERROR: Missing Environment Variables.")
@@ -77,8 +81,12 @@ if __name__ == "__main__":
         print("BASELINE_TIMESTAMP=20260502_220411 OOD_WEATHER=Fog OOD_SEVERITY=hard OOD_TIMESTAMP=... python safety_monitor/auroc_evaluator.py\n")
         sys.exit(1)
 
-    id_maha_path = os.path.join(FEATURE_OUTPUT, "nuscenes", baseline_timestamp, "mahalanobis_distances.json")
-    ood_maha_path = os.path.join(FEATURE_OUTPUT, weather, severity, timestamp, "mahalanobis_distances.json")
+    if normalization:
+        id_maha_path = os.path.join(FEATURE_OUTPUT, "nuscenes", "normalized", baseline_timestamp, "mahalanobis_distances.json")
+        ood_maha_path = os.path.join(FEATURE_OUTPUT, weather, severity, "normalized", timestamp, "mahalanobis_distances.json")
+    else:
+        id_maha_path = os.path.join(FEATURE_OUTPUT, "nuscenes", baseline_timestamp, "mahalanobis_distances.json")
+        ood_maha_path = os.path.join(FEATURE_OUTPUT, weather, severity, timestamp, "mahalanobis_distances.json")
 
     id_energy_path = os.path.join(ENERGY_OUTPUT, "nuscenes", baseline_timestamp, "energy_scores.json")
     ood_energy_path = os.path.join(ENERGY_OUTPUT, weather, severity, timestamp, "energy_scores.json")
@@ -123,8 +131,12 @@ if __name__ == "__main__":
             print(f"\tMissing OOD: {ood_energy_path}")
 
     if curve_data:
-        save_dir = os.path.join(AUROC_PLOT_OUTPUT, weather, severity, timestamp)
-        plot_roc_curves(curve_data, weather, severity, save_dir)
+        if normalization:
+            save_dir = os.path.join(AUROC_PLOT_OUTPUT, weather, severity, "normalized", timestamp)
+        else:
+            save_dir = os.path.join(AUROC_PLOT_OUTPUT, weather, severity, timestamp)
+        
+        plot_roc_curves(curve_data, weather, severity, save_dir, normalization)
 
     # Print the final benchmarks
     print("\n---------------- FINAL AUROC ---------------------")
