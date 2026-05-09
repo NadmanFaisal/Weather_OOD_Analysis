@@ -83,3 +83,62 @@ apptainer exec --nv \
     python safety_monitor/mahalanobis.py
 
 echo "Mahalanobis Distance (Normalized) calculation complete!"
+
+# ---------------------------------------------------------
+# Step 5: Evaluate AUROC (Raw)
+# ---------------------------------------------------------
+echo "Running Step 5: (Raw) AUROC Evaluation..."
+
+apptainer exec --nv \
+    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+    --pwd $PROJECT_DIR \
+    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
+    $CONTAINER \
+    python safety_monitor/auroc_evaluator.py
+
+echo "AUROC (Raw) plots generated!"
+
+# ---------------------------------------------------------
+# Step 6: Evaluate AUROC (Normalized)
+# ---------------------------------------------------------
+echo "Running Step 6: (Normalized) AUROC Evaluation..."
+
+apptainer exec --nv \
+    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+    --pwd $PROJECT_DIR \
+    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
+    $CONTAINER \
+    python safety_monitor/auroc_evaluator.py
+
+echo "AUROC (Normalized) plots generated!"
+
+# ---------------------------------------------------------
+# Step 7: Evaluate FPR95 (Raw)
+# ---------------------------------------------------------
+echo "Running Step 7: (Raw) FPR95 Evaluation..."
+
+apptainer exec --nv \
+    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+    --pwd $PROJECT_DIR \
+    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
+    $CONTAINER \
+    python safety_monitor/fpr95_evaluator.py
+
+echo "FPR95 (Raw) plots generated!"
+
+# ---------------------------------------------------------
+# Step 8: Evaluate FPR95 (Normalized)
+# ---------------------------------------------------------
+echo "Running Step 8: (Normalized) FPR95 Evaluation..."
+
+apptainer exec --nv \
+    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+    --pwd $PROJECT_DIR \
+    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
+    $CONTAINER \
+    python safety_monitor/fpr95_evaluator.py
+
+echo "FPR95 (Normalized) plots generated!"
+echo "========================================================="
+echo "PIPELINE COMPLETELY FINISHED!"
+echo "========================================================="

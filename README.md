@@ -639,12 +639,12 @@ NORMALIZATION=true OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_
 ```
 This will output the final evaluated `.png` plots to `plots/auroc/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}` (or the `normalized/` subdirectory).
 > [!IMPORTANT]
-> Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset).
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
-> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
-> For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+> - Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset).
+> - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
+> - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
+> - For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
 ### FPR_95 Evaluation
 To run get FPR95 scores, run the following command:
 ```bash
@@ -656,9 +656,9 @@ NORMALIZATION=true OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_
 ```
 This will output the final evaluated `.png` plots to `plots/fpr95/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}` (or the `normalized/` subdirectory).
 > [!IMPORTANT]
-> Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow`.
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
-> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
-> For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+> - Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Fog` or `Snow`.
+> - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
+>  - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
+> - For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
