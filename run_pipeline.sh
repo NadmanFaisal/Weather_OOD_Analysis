@@ -1,0 +1,46 @@
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --gpus-per-node=A40:4       # Adjust based on what GPUs you want to use
+#SBATCH --time=05:00:00             # Adjust time as needed
+#SBATCH --account=NAISS2026-4-688
+
+# --- UPDATE THESE TWO PATHS ---
+PROJECT_DIR="/mimer/NOBACKUP/groups/av-ood-benchmarking/seasonal-weather-ood/Weather_OOD_Analysis"
+CONTAINER="/mimer/NOBACKUP/groups/av-ood-benchmarking/seasonal-weather-ood/Weather_OOD_Analysis/bevformer_env.sif"
+
+# 1. Define Master Variables
+export OOD_WEATHER="Fog"            # Adjust this as you need
+export OOD_SEVERITY="easy"          # Adjust this as you need
+export OOD_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+
+echo "Starting Evaluation for $OOD_WEATHER $OOD_SEVERITY at $OOD_TIMESTAMP..."
+
+# ---------------------------------------------------------
+# Step 1: Run BEVFormer Evaluation (4 GPUs)
+# ---------------------------------------------------------
+echo "Running Step 1: Model Evaluation..."
+apptainer exec --nv \
+    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+    --pwd $PROJECT_DIR/core_models/BEVFormer \
+    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$OOD_TIMESTAMP \
+    $CONTAINER \
+    bash -c "PYTHONPATH=. ./tools/dist_test.sh projects/configs/bevformer/bevformer_base.py ckpts/bevformer_r101_dcn_24ep.pth 4 --eval bbox"  # Adjust the number of GPU according to how much allocation is made
+
+# ---------------------------------------------------------
+# Step 2: Calculate Energy Scores
+# ---------------------------------------------------------
+echo "Running Step 2: Energy Scores..."
+
+LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
+ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
+
+echo "Found actual folder: $ACTUAL_TIMESTAMP"
+
+apptainer exec --nv \
+    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+    --pwd $PROJECT_DIR \
+    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP \
+    $CONTAINER \
+    python safety_monitor/energy_score.py
+
+echo "Pipeline Complete!"
