@@ -12,6 +12,7 @@ CONTAINER="/mimer/NOBACKUP/groups/av-ood-benchmarking/seasonal-weather-ood/Weath
 export OOD_WEATHER="Fog"            # Adjust this as you need
 export OOD_SEVERITY="easy"          # Adjust this as you need
 export OOD_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+export BASELINE_ID="20260502_220411"
 
 echo "Starting Evaluation for $OOD_WEATHER $OOD_SEVERITY at $OOD_TIMESTAMP..."
 
@@ -43,4 +44,42 @@ apptainer exec --nv \
     $CONTAINER \
     python safety_monitor/energy_score.py
 
-echo "Pipeline Complete!"
+echo "Energy Score calculation complete!"
+
+# ---------------------------------------------------------
+# Step 3: Calculate Raw Mahalanobis Distance
+# ---------------------------------------------------------
+echo "Running Step 3: (Raw) Mahalanobis Distance..."
+
+LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
+ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
+
+echo "Found actual folder: $ACTUAL_TIMESTAMP"
+
+apptainer exec --nv \
+    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+    --pwd $PROJECT_DIR \
+    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
+    $CONTAINER \
+    python safety_monitor/mahalanobis.py
+
+echo "Mahalanobis Distance (Raw) calculation complete!"
+
+# ---------------------------------------------------------
+# Step 4: Calculate Raw Mahalanobis Distance
+# ---------------------------------------------------------
+echo "Running Step 4: (Normalized) Mahalanobis Distance..."
+
+LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
+ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
+
+echo "Found actual folder: $ACTUAL_TIMESTAMP"
+
+apptainer exec --nv \
+    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+    --pwd $PROJECT_DIR \
+    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
+    $CONTAINER \
+    python safety_monitor/mahalanobis.py
+
+echo "Mahalanobis Distance (Normalized) calculation complete!"
