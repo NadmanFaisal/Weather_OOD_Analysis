@@ -662,3 +662,32 @@ This will output the final evaluated `.png` plots to `plots/fpr95/{OOD_WEATHER}/
 > - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
 >  - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 > - For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+
+## Docker Workflow
+To use docker, pull the image in the root:
+```bash
+apptainer pull bevformer_env.sif docker://ghcr.io/nadmanfaisal/ood-analysis:v1
+```
+This will generate a `bevformer_eval.sif` file that will be used for pipeline run
+### Understanding the `run_pipeline.sh`
+Before submitting the job, open run_pipeline.sh and update the following variables to match your specific environment:
+- Slurm Settings: Update `#SBATCH --account=NAISS...` with your active compute allocation ID, and adjust the `--gpus-per-node` if needed.
+- Absolute Paths: Update `PROJECT_DIR` and `CONTAINER` to point to your exact directories.
+- Experiment Toggles: Set your target `OOD_WEATHER` (e.g., Fog, Snow, Clear) and `OOD_SEVERITY`.
+- Baseline ID: Update the `BASELINE_ID` variable with the timestamp of your clean baseline run. (This is strictly required for the Mahalanobis Distance calculations in Steps 3 and 4).
+### Run pipeline:
+From the root, run the following:
+```bash
+sbatch run_pipeline.sh
+```
+### Monitor the job
+Because this runs in the background on compute nodes, it will not print to your terminal.
+
+Check your job status and find your JOBID:
+```bash
+squeue -u $USER
+```
+Once the job state changes to R (Running), Slurm will generate a log file. You can watch the live output of your pipeline by running:
+```bash
+tail -f slurm-<JOBID>.out
+```
