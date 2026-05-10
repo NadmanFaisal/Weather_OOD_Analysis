@@ -64,3 +64,6 @@ core_models/mmdetection3d
 
 #Safety Monitor
 safety_monitor/__pycache__
+
+# Apptainer files
+bevformer_env.sif

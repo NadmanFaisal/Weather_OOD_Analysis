@@ -639,12 +639,12 @@ NORMALIZATION=true OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_
 ```
 This will output the final evaluated `.png` plots to `plots/auroc/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}` (or the `normalized/` subdirectory).
 > [!IMPORTANT]
-> Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset).
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
-> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
-> For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+> - Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Fog` or `Snow` (for corrupted dataset).
+> - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
+> - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
+> - For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
 ### FPR_95 Evaluation
 To run get FPR95 scores, run the following command:
 ```bash
@@ -656,9 +656,38 @@ NORMALIZATION=true OOD_WEATHER=Weather OOD_SEVERITY=severity OOD_TIMESTAMP=DATE_
 ```
 This will output the final evaluated `.png` plots to `plots/fpr95/{OOD_WEATHER}/{OOD_SEVERITY}/{OOD_TIMESTAMP}` (or the `normalized/` subdirectory).
 > [!IMPORTANT]
-> Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
-> The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
-> The `OOD_WEATHER` can be `Fog` or `Snow`.
-> The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
-> For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
-> For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+> - Adding `NORMALIZATION=true` will automatically update the title of your generated .png graph to say "(Normalized)" and will load the Mahalanobis JSON scores from your `normalized/` directories.
+> - The `OOD_WEATHER` and `OOD_SEVERITY` tells BEVFormer which folder to target (Case sensitive).
+> - The `OOD_WEATHER` can be `Fog` or `Snow`.
+> - The `OOD_SEVERITY` can be `easy`, `mid`, or `hard` (for corrupted dataset).
+>  - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
+> - For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
+
+## Docker Workflow
+To use docker, pull the image in the root:
+```bash
+apptainer pull bevformer_env.sif docker://ghcr.io/nadmanfaisal/ood-analysis:v1
+```
+This will generate a `bevformer_eval.sif` file that will be used for pipeline run
+### Understanding the `run_pipeline.sh`
+Before submitting the job, open run_pipeline.sh and update the following variables to match your specific environment:
+- Slurm Settings: Update `#SBATCH --account=NAISS...` with your active compute allocation ID, and adjust the `--gpus-per-node` if needed.
+- Absolute Paths: Update `PROJECT_DIR` and `CONTAINER` to point to your exact directories.
+- Experiment Toggles: Set your target `OOD_WEATHER` (e.g., Fog, Snow, Clear) and `OOD_SEVERITY`.
+- Baseline ID: Update the `BASELINE_ID` variable with the timestamp of your clean baseline run. (This is strictly required for the Mahalanobis Distance calculations in Steps 3 and 4).
+### Run pipeline:
+From the root, run the following:
+```bash
+sbatch run_pipeline.sh
+```
+### Monitor the job
+Because this runs in the background on compute nodes, it will not print to your terminal.
+
+Check your job status and find your JOBID:
+```bash
+squeue -u $USER
+```
+Once the job state changes to R (Running), Slurm will generate a log file. You can watch the live output of your pipeline by running:
+```bash
+tail -f slurm-<JOBID>.out
+```
