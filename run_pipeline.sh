@@ -9,136 +9,152 @@ PROJECT_DIR="/mimer/NOBACKUP/groups/av-ood-benchmarking/seasonal-weather-ood/Wea
 CONTAINER="/mimer/NOBACKUP/groups/av-ood-benchmarking/seasonal-weather-ood/Weather_OOD_Analysis/bevformer_env.sif"
 
 # 1. Define Master Variables
-export OOD_WEATHER="Fog"            # Adjust this as you need
-export OOD_SEVERITY="easy"          # Adjust this as you need
 export OOD_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 export BASELINE_ID="20260502_220411"
 
-echo "Starting Evaluation for $OOD_WEATHER $OOD_SEVERITY at $OOD_TIMESTAMP..."
+WEATHERS=("Fog" "Snow")
+SEVERITIES=("easy" "mid" "hard")
 
-# ---------------------------------------------------------
-# Step 1: Run BEVFormer Evaluation (4 GPUs)
-# ---------------------------------------------------------
-echo "Running Step 1: Model Evaluation..."
-apptainer exec --nv \
-    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-    --pwd $PROJECT_DIR/core_models/BEVFormer \
-    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$OOD_TIMESTAMP \
-    $CONTAINER \
-    bash -c "PYTHONPATH=. ./tools/dist_test.sh projects/configs/bevformer/bevformer_base.py ckpts/bevformer_r101_dcn_24ep.pth 4 --eval bbox"  # Adjust the number of GPU according to how much allocation is made
+for CURRENT_WEATHER in "${WEATHERS[@]}"; do
+  for CURRENT_SEVERITY in "${SEVERITIES[@]}"; do
 
-# ---------------------------------------------------------
-# Step 2: Calculate Energy Scores
-# ---------------------------------------------------------
-echo "Running Step 2: Energy Scores..."
+    echo "========================================================="
+    echo "STARTING FULL PIPELINE FOR: $CURRENT_WEATHER ($CURRENT_SEVERITY)"
+    echo "========================================================="
+    
+    export OOD_WEATHER=$CURRENT_WEATHER
+    export OOD_SEVERITY=$CURRENT_SEVERITY
+    export OOD_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
-LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
-ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
+    # ---------------------------------------------------------
+    # Step 1: Run BEVFormer Evaluation (4 GPUs)
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 1: Model Evaluation..."
+    apptainer exec --nv \
+        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+        --pwd $PROJECT_DIR/core_models/BEVFormer \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$OOD_TIMESTAMP \
+        $CONTAINER \
+        bash -c "PYTHONPATH=. ./tools/dist_test.sh projects/configs/bevformer/bevformer_base.py ckpts/bevformer_r101_dcn_24ep.pth 4 --eval bbox"  # Adjust the number of GPU according to how much allocation is made
 
-echo "Found actual folder: $ACTUAL_TIMESTAMP"
+    # ---------------------------------------------------------
+    # Step 2: Calculate Energy Scores
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 2: Energy Scores..."
 
-apptainer exec --nv \
-    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-    --pwd $PROJECT_DIR \
-    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP \
-    $CONTAINER \
-    python safety_monitor/energy_score.py
+    LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
+    ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
 
-echo "Energy Score calculation complete!"
+    echo "Found actual folder: $ACTUAL_TIMESTAMP"
 
-# ---------------------------------------------------------
-# Step 3: Calculate Raw Mahalanobis Distance
-# ---------------------------------------------------------
-echo "Running Step 3: (Raw) Mahalanobis Distance..."
+    apptainer exec --nv \
+        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+        --pwd $PROJECT_DIR \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP \
+        $CONTAINER \
+        python safety_monitor/energy_score.py
 
-LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
-ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
+    echo "Energy Score calculation complete!"
 
-echo "Found actual folder: $ACTUAL_TIMESTAMP"
+    # ---------------------------------------------------------
+    # Step 3: Calculate Raw Mahalanobis Distance
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 3: (Raw) Mahalanobis Distance..."
 
-apptainer exec --nv \
-    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-    --pwd $PROJECT_DIR \
-    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
-    $CONTAINER \
-    python safety_monitor/mahalanobis.py
+    LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
+    ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
 
-echo "Mahalanobis Distance (Raw) calculation complete!"
+    echo "Found actual folder: $ACTUAL_TIMESTAMP"
 
-# ---------------------------------------------------------
-# Step 4: Calculate Raw Mahalanobis Distance
-# ---------------------------------------------------------
-echo "Running Step 4: (Normalized) Mahalanobis Distance..."
+    apptainer exec --nv \
+        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+        --pwd $PROJECT_DIR \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
+        $CONTAINER \
+        python safety_monitor/mahalanobis.py
 
-LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
-ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
+    echo "Mahalanobis Distance (Raw) calculation complete!"
 
-echo "Found actual folder: $ACTUAL_TIMESTAMP"
+    # ---------------------------------------------------------
+    # Step 4: Calculate Raw Mahalanobis Distance
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 4: (Normalized) Mahalanobis Distance..."
 
-apptainer exec --nv \
-    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-    --pwd $PROJECT_DIR \
-    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
-    $CONTAINER \
-    python safety_monitor/mahalanobis.py
+    LATEST_FOLDER=$(ls -td $PROJECT_DIR/data/intercepted_feature_logits/$OOD_WEATHER/$OOD_SEVERITY/*/ | head -1)
+    ACTUAL_TIMESTAMP=$(basename $LATEST_FOLDER)
 
-echo "Mahalanobis Distance (Normalized) calculation complete!"
+    echo "Found actual folder: $ACTUAL_TIMESTAMP"
 
-# ---------------------------------------------------------
-# Step 5: Evaluate AUROC (Raw)
-# ---------------------------------------------------------
-echo "Running Step 5: (Raw) AUROC Evaluation..."
+    apptainer exec --nv \
+        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+        --pwd $PROJECT_DIR \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
+        $CONTAINER \
+        python safety_monitor/mahalanobis.py
 
-apptainer exec --nv \
-    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-    --pwd $PROJECT_DIR \
-    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
-    $CONTAINER \
-    python safety_monitor/auroc_evaluator.py
+    echo "Mahalanobis Distance (Normalized) calculation complete!"
 
-echo "AUROC (Raw) plots generated!"
+    # ---------------------------------------------------------
+    # Step 5: Evaluate AUROC (Raw)
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 5: (Raw) AUROC Evaluation..."
 
-# ---------------------------------------------------------
-# Step 6: Evaluate AUROC (Normalized)
-# ---------------------------------------------------------
-echo "Running Step 6: (Normalized) AUROC Evaluation..."
+    apptainer exec --nv \
+        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+        --pwd $PROJECT_DIR \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
+        $CONTAINER \
+        python safety_monitor/auroc_evaluator.py
 
-apptainer exec --nv \
-    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-    --pwd $PROJECT_DIR \
-    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
-    $CONTAINER \
-    python safety_monitor/auroc_evaluator.py
+    echo "AUROC (Raw) plots generated!"
 
-echo "AUROC (Normalized) plots generated!"
+    # ---------------------------------------------------------
+    # Step 6: Evaluate AUROC (Normalized)
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 6: (Normalized) AUROC Evaluation..."
 
-# ---------------------------------------------------------
-# Step 7: Evaluate FPR95 (Raw)
-# ---------------------------------------------------------
-echo "Running Step 7: (Raw) FPR95 Evaluation..."
+    apptainer exec --nv \
+        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+        --pwd $PROJECT_DIR \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
+        $CONTAINER \
+        python safety_monitor/auroc_evaluator.py
 
-apptainer exec --nv \
-    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-    --pwd $PROJECT_DIR \
-    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
-    $CONTAINER \
-    python safety_monitor/fpr95_evaluator.py
+    echo "AUROC (Normalized) plots generated!"
 
-echo "FPR95 (Raw) plots generated!"
+    # ---------------------------------------------------------
+    # Step 7: Evaluate FPR95 (Raw)
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 7: (Raw) FPR95 Evaluation..."
 
-# ---------------------------------------------------------
-# Step 8: Evaluate FPR95 (Normalized)
-# ---------------------------------------------------------
-echo "Running Step 8: (Normalized) FPR95 Evaluation..."
+    apptainer exec --nv \
+        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+        --pwd $PROJECT_DIR \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
+        $CONTAINER \
+        python safety_monitor/fpr95_evaluator.py
 
-apptainer exec --nv \
-    --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-    --pwd $PROJECT_DIR \
-    --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
-    $CONTAINER \
-    python safety_monitor/fpr95_evaluator.py
+    echo "FPR95 (Raw) plots generated!"
 
-echo "FPR95 (Normalized) plots generated!"
+    # ---------------------------------------------------------
+    # Step 8: Evaluate FPR95 (Normalized)
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 8: (Normalized) FPR95 Evaluation..."
+
+    apptainer exec --nv \
+        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
+        --pwd $PROJECT_DIR \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
+        $CONTAINER \
+        python safety_monitor/fpr95_evaluator.py
+
+    echo "FPR95 (Normalized) plots generated!"
+    echo "========================================================="
+    echo "PIPELINE COMPLETELY FINISHED!"
+    echo "========================================================="
+  done
+done
+
 echo "========================================================="
-echo "PIPELINE COMPLETELY FINISHED!"
+echo "ALL WEATHERS AND SEVERITIES COMPLETELY FINISHED!"
 echo "========================================================="
