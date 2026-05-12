@@ -39,7 +39,11 @@ def plot_roc_curves(curve_data: dict, weather: str, severity: str, save_dir, is_
     
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess (0.50)')
 
-    colors = {'Mahalanobis Distance': 'darkorange', 'Energy Score': 'cornflowerblue'}
+    colors = {
+        'Mahalanobis Distance': 'darkorange', 
+        'Mahalanobis (Normalized)': 'firebrick', 
+        'Energy Score': 'cornflowerblue'
+    }
     
     for metric_name, data in curve_data.items():
         fpr = data['fpr']
@@ -55,7 +59,7 @@ def plot_roc_curves(curve_data: dict, weather: str, severity: str, save_dir, is_
     plt.xlabel('False Positive Rate (FPR)')
     plt.ylabel('True Positive Rate (TPR)')
 
-    title_suffix = " (Normalized)" if is_normalized else " (Raw)"
+    title_suffix = " (Raw vs Normalized)" if is_normalized else " (Raw vs Energy)"
     plt.title(f'OOD Detection ROC Curve: {weather.capitalize()} ({severity.capitalize()}){title_suffix}')
 
     plt.legend(loc="lower right")
@@ -88,23 +92,22 @@ if __name__ == "__main__":
         id_maha_path = os.path.join(FEATURE_OUTPUT, "nuscenes", baseline_timestamp, "mahalanobis_distances.json")
         ood_maha_path = os.path.join(FEATURE_OUTPUT, weather, severity, timestamp, "mahalanobis_distances.json")
 
-    id_energy_path = os.path.join(ENERGY_OUTPUT, "nuscenes", baseline_timestamp, "energy_scores.json")
-    ood_energy_path = os.path.join(ENERGY_OUTPUT, weather, severity, timestamp, "energy_scores.json")
+    id_maha_raw_path = os.path.join(FEATURE_OUTPUT, "nuscenes", baseline_timestamp, "mahalanobis_distances.json")
+    ood_maha_raw_path = os.path.join(FEATURE_OUTPUT, weather, severity, timestamp, "mahalanobis_distances.json")
 
     results = {}
     curve_data = {}
 
     # Evaluate Mahalanobis Distance
     if os.path.exists(id_maha_path) and os.path.exists(ood_maha_path):
-        id_maha_scores = get_json_scores(id_maha_path)
-        ood_maha_scores = get_json_scores(ood_maha_path)
+        id_maha_raw_scores = get_json_scores(id_maha_raw_path)
+        ood_maha_raw_scores = get_json_scores(ood_maha_raw_path)
         
-        maha_auroc, maha_fpr, maha_tpr = get_auroc_score(id_maha_scores, ood_maha_scores, "Mahalanobis")
-        if maha_auroc is not None:
-            results['Mahalanobis Distance'] = maha_auroc
-
-            curve_data['Mahalanobis Distance'] = {'fpr': maha_fpr, 'tpr': maha_tpr, 'auroc': maha_auroc}
-            print(f"Mahalanobis Distances Loaded -> ID: {len(id_maha_scores)} frames | OOD: {len(ood_maha_scores)} frames")
+        maha_raw_auroc, maha_raw_fpr, maha_raw_tpr = get_auroc_score(id_maha_raw_scores, ood_maha_raw_scores, "Mahalanobis (Raw)")
+        if maha_raw_auroc is not None:
+            results['Mahalanobis (Raw)'] = maha_raw_auroc
+            curve_data['Mahalanobis (Raw)'] = {'fpr': maha_raw_fpr, 'tpr': maha_raw_tpr, 'auroc': maha_raw_auroc}
+            print(f"Raw Mahalanobis Loaded -> ID: {len(id_maha_raw_scores)} frames | OOD: {len(ood_maha_raw_scores)} frames")
     else:
         print("[!] Missing Mahalanobis JSON files. Skipping metric.")
         if not os.path.exists(id_maha_path): 
@@ -112,23 +115,43 @@ if __name__ == "__main__":
         if not os.path.exists(ood_maha_path): 
             print(f"\tMissing OOD: {ood_maha_path}")
 
-    # Evaluate Energy Score
-    if os.path.exists(id_energy_path) and os.path.exists(ood_energy_path):
-        id_energy_scores = get_json_scores(id_energy_path)
-        ood_energy_scores = get_json_scores(ood_energy_path)
-        
-        energy_auroc, energy_fpr, energy_tpr = get_auroc_score(id_energy_scores, ood_energy_scores, "Energy Score")
-        if energy_auroc is not None:
-            results['Energy Score'] = energy_auroc
+    if normalization:
+        # Evaluate Mahalanobis raw vs Mahalanobis normalized
+        id_maha_norm_path = os.path.join(FEATURE_OUTPUT, "nuscenes", "normalized", baseline_timestamp, "mahalanobis_distances.json")
+        ood_maha_norm_path = os.path.join(FEATURE_OUTPUT, weather, severity, "normalized", timestamp, "mahalanobis_distances.json")
 
-            curve_data['Energy Score'] = {'fpr': energy_fpr, 'tpr': energy_tpr, 'auroc': energy_auroc}
-            print(f"Energy Scores Loaded -> ID: {len(id_energy_scores)} frames | OOD: {len(ood_energy_scores)} frames")
+        if os.path.exists(id_maha_norm_path) and os.path.exists(ood_maha_norm_path):
+            id_maha_norm_scores = get_json_scores(id_maha_norm_path)
+            ood_maha_norm_scores = get_json_scores(ood_maha_norm_path)
+            
+            maha_norm_auroc, maha_norm_fpr, maha_norm_tpr = get_auroc_score(id_maha_norm_scores, ood_maha_norm_scores, "Mahalanobis (Normalized)")
+            if maha_norm_auroc is not None:
+                results['Mahalanobis (Normalized)'] = maha_norm_auroc
+                curve_data['Mahalanobis (Normalized)'] = {'fpr': maha_norm_fpr, 'tpr': maha_norm_tpr, 'auroc': maha_norm_auroc}
+                print(f"Normalized Mahalanobis Loaded -> ID: {len(id_maha_norm_scores)} frames | OOD: {len(ood_maha_norm_scores)} frames")
+        else:
+            print("[!] Missing Normalized Mahalanobis JSON files.")
     else:
-        print("[!] Missing Energy JSON files. Skipping metric.")
-        if not os.path.exists(id_energy_path): 
-            print(f"\tMissing ID: {id_energy_path}")
-        if not os.path.exists(ood_energy_path): 
-            print(f"\tMissing OOD: {ood_energy_path}")
+        # Evaluate Mahalanobis raw vs Energy Score
+        id_energy_path = os.path.join(ENERGY_OUTPUT, "nuscenes", baseline_timestamp, "energy_scores.json")
+        ood_energy_path = os.path.join(ENERGY_OUTPUT, weather, severity, timestamp, "energy_scores.json")
+
+        if os.path.exists(id_energy_path) and os.path.exists(ood_energy_path):
+            id_energy_scores = get_json_scores(id_energy_path)
+            ood_energy_scores = get_json_scores(ood_energy_path)
+            
+            energy_auroc, energy_fpr, energy_tpr = get_auroc_score(id_energy_scores, ood_energy_scores, "Energy Score")
+            if energy_auroc is not None:
+                results['Energy Score'] = energy_auroc
+
+                curve_data['Energy Score'] = {'fpr': energy_fpr, 'tpr': energy_tpr, 'auroc': energy_auroc}
+                print(f"Energy Scores Loaded -> ID: {len(id_energy_scores)} frames | OOD: {len(ood_energy_scores)} frames")
+        else:
+            print("[!] Missing Energy JSON files. Skipping metric.")
+            if not os.path.exists(id_energy_path): 
+                print(f"\tMissing ID: {id_energy_path}")
+            if not os.path.exists(ood_energy_path): 
+                print(f"\tMissing OOD: {ood_energy_path}")
 
     if curve_data:
         if normalization:
