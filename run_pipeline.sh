@@ -34,7 +34,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/data:/workspace/data \
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
-        --bind $PROJECT_DIR/core_models/BEVFormer/.dist_test:/workspace/core_models/BEVFormer/.dist_test \
+        --bind $PROJECT_DIR/evaluation_results/.dist_test:/workspace/core_models/BEVFormer/.dist_test \
         --bind $PROJECT_DIR/evaluation_results/:/workspace/core_models/BEVFormer/test \
         --pwd /workspace/core_models/BEVFormer \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$OOD_TIMESTAMP \

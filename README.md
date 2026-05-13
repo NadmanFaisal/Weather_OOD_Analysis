@@ -664,6 +664,8 @@ This will output the final evaluated `.png` plots to `plots/fpr95/{OOD_WEATHER}/
 > - For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
 
 ## Docker Workflow
+This project uses a fully independent, containerized environment to ensure 100% reproducibility across different compute nodes. The container securely houses all core models (BEVFormer, mmdetection3d) and evaluation scripts.
+
 To use docker, pull the image in the root:
 ```bash
 apptainer pull bevformer_env.sif docker://ghcr.io/nadmanfaisal/ood-analysis:v1
