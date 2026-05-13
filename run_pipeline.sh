@@ -31,8 +31,12 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     # ---------------------------------------------------------
     echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 1: Model Evaluation..."
     apptainer exec --nv \
-        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-        --pwd $PROJECT_DIR/core_models/BEVFormer \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --bind $PROJECT_DIR/core_models/BEVFormer/.dist_test:/workspace/core_models/BEVFormer/.dist_test \
+        --bind $PROJECT_DIR/evaluation_results/:/workspace/core_models/BEVFormer/test \
+        --pwd /workspace/core_models/BEVFormer \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$OOD_TIMESTAMP \
         $CONTAINER \
         bash -c "PYTHONPATH=. ./tools/dist_test.sh projects/configs/bevformer/bevformer_base.py ckpts/bevformer_r101_dcn_24ep.pth 4 --eval bbox"  # Adjust the number of GPU according to how much allocation is made
@@ -48,8 +52,10 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "Found actual folder: $ACTUAL_TIMESTAMP"
 
     apptainer exec --nv \
-        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-        --pwd $PROJECT_DIR \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --pwd /workspace \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP \
         $CONTAINER \
         python safety_monitor/energy_score.py
@@ -67,8 +73,10 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "Found actual folder: $ACTUAL_TIMESTAMP"
 
     apptainer exec --nv \
-        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-        --pwd $PROJECT_DIR \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --pwd /workspace \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
         $CONTAINER \
         python safety_monitor/mahalanobis.py
@@ -86,8 +94,10 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "Found actual folder: $ACTUAL_TIMESTAMP"
 
     apptainer exec --nv \
-        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-        --pwd $PROJECT_DIR \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --pwd /workspace \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
         $CONTAINER \
         python safety_monitor/mahalanobis.py
@@ -100,8 +110,10 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 5: (Raw) AUROC Evaluation..."
 
     apptainer exec --nv \
-        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-        --pwd $PROJECT_DIR \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --pwd /workspace \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
         $CONTAINER \
         python safety_monitor/auroc_evaluator.py
@@ -114,8 +126,10 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 6: (Normalized) AUROC Evaluation..."
 
     apptainer exec --nv \
-        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-        --pwd $PROJECT_DIR \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --pwd /workspace \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
         $CONTAINER \
         python safety_monitor/auroc_evaluator.py
@@ -128,8 +142,10 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 7: (Raw) FPR95 Evaluation..."
 
     apptainer exec --nv \
-        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-        --pwd $PROJECT_DIR \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --pwd /workspace \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
         $CONTAINER \
         python safety_monitor/fpr95_evaluator.py
@@ -142,8 +158,10 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 8: (Normalized) FPR95 Evaluation..."
 
     apptainer exec --nv \
-        --bind /mimer/NOBACKUP:/mimer/NOBACKUP \
-        --pwd $PROJECT_DIR \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --pwd /workspace \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
         $CONTAINER \
         python safety_monitor/fpr95_evaluator.py
