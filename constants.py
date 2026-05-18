@@ -91,6 +91,9 @@ FEATURE_OUTPUT = 'data/mahalanobis_distances'
 # Data Plots
 AUROC_PLOT_OUTPUT = 'plots/auroc'
 FPR95_PLOT_OUTPUT = 'plots/fpr95'
+RISK_COVERAGE_PLOT_OUTPUT = 'plots/risk_coverage'
+
+BEVFORMER_TEST_BASE = 'core_models/BEVFormer/test/bevformer_base'
 
 # Used for our own custom corruption generation (Not Needed anymore)
 CORRUPTED_PKL = 'data/sets/nuscenes_corrupted/fog/nuscenes_infos_temporal_val.pkl'
