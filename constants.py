@@ -95,6 +95,16 @@ RISK_COVERAGE_PLOT_OUTPUT = 'plots/risk_coverage'
 
 BEVFORMER_TEST_BASE = 'core_models/BEVFormer/test/bevformer_base'
 
+# Maps each (weather, severity) condition to its nuScenes-C ground truth PKL file
+PKL_MAP = {
+    ('Fog',  'easy'): 'data/sets/nuscenes-c/nuScenes-c/Fog/easy/nuscenes_infos_temporal_val.pkl',
+    ('Fog',  'mid'):  'data/sets/nuscenes-c/nuScenes-c/Fog/mid/nuscenes_infos_temporal_val.pkl',
+    ('Fog',  'hard'): 'data/sets/nuscenes-c/nuScenes-c/Fog/hard/nuscenes_infos_temporal_val.pkl',
+    ('Snow', 'easy'): 'data/sets/nuscenes-c/nuScenes-c/Snow/easy/nuscenes_infos_temporal_val.pkl',
+    ('Snow', 'mid'):  'data/sets/nuscenes-c/nuScenes-c/Snow/mid/nuscenes_infos_temporal_val.pkl',
+    ('Snow', 'hard'): 'data/sets/nuscenes-c/nuScenes-c/Snow/hard/nuscenes_infos_temporal_val.pkl',
+}
+
 # Used for our own custom corruption generation (Not Needed anymore)
 CORRUPTED_PKL = 'data/sets/nuscenes_corrupted/fog/nuscenes_infos_temporal_val.pkl'
 OUTPUT_PKL = 'data/sets/nuscenes_combined/nuscenes_infos_temporal_MIXED_val.pkl'
