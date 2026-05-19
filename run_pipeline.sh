@@ -167,6 +167,25 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         python safety_monitor/fpr95_evaluator.py
 
     echo "FPR95 (Normalized) plots generated!"
+
+    # ---------------------------------------------------------
+    # Step 9: Evaluate Risk-Coverage Curve (Raw + Normalized)
+    # ---------------------------------------------------------
+    echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 9: Risk-Coverage Curve..."
+
+    apptainer exec --nv \
+        --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
+        --bind $PROJECT_DIR/plots:/workspace/plots \
+        --bind $PROJECT_DIR/evaluation_results/:/workspace/core_models/BEVFormer/test \
+        --bind $PROJECT_DIR/safety_monitor:/workspace/safety_monitor \
+        --pwd /workspace \
+        --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID \
+        $CONTAINER \
+        python safety_monitor/risk_coverage_evaluator.py
+
+    echo "Risk-Coverage Curve (Raw + Normalized) plots generated!"
+    
     echo "========================================================="
     echo "PIPELINE COMPLETELY FINISHED!"
     echo "========================================================="
