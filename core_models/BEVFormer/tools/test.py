@@ -6,6 +6,17 @@
 import argparse
 import mmcv
 import os
+
+import copyreg
+import torch.nn.parallel
+
+def _pickle_dict_keys(d_keys):
+    return list, (list(d_keys),)
+
+copyreg.pickle(type({}.keys()), _pickle_dict_keys)
+copyreg.pickle(type({}.values()), _pickle_dict_keys)
+torch.nn.parallel.DistributedDataParallel._use_replicated_tensor_module = False
+
 import torch
 import warnings
 from mmcv import Config, DictAction
