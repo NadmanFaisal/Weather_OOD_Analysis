@@ -1,0 +1,104 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/pytorch:23.04-py3
+
+%environment
+    export DEBIAN_FRONTEND=noninteractive
+    export PYTHONPATH="/workspace/core_models/BEVFormer"
+
+%files
+    constants.py /workspace/constants.py
+    safety_monitor /workspace/
+    core_models/BEVFormer/projects/configs/bevformer/* /workspace/temp_configs/
+    core_models/BEVFormer/tools/test.py /workspace/temp_test.py
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export MMCV_WITH_OPS=1
+
+    # FIX: Tell APT not to switch to the _apt user in rootless mode
+    echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99disable-sandbox
+
+    # 1. Install the container's native fakeroot to fix the GLIBC mismatch
+    apt-get update
+    apt-get install -y fakeroot
+
+    # 2. Write all our build commands into a script inside the container
+    cat << 'EOF' > /workspace/build_script.sh
+#!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
+export MMCV_WITH_OPS=1
+
+apt-get update
+apt-get install -y git wget ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx
+apt-get clean && rm -rf /var/lib/apt/lists/*
+
+python -m pip install --upgrade pip
+pip install setuptools==65.5.0 wheel
+
+# Install MMCV cleanly
+pip install mmcv-full==1.7.2 --no-build-isolation
+pip install mmdet==2.28.2 mmsegmentation==0.30.0 trimesh==2.35.39 tensorboard==2.11.0 scikit-image==0.19.3
+
+mkdir -p /workspace/data/ /workspace/checkpoints /workspace/plots /workspace/core_models/
+
+# Install mmdet3d cleanly
+cd /workspace/core_models/
+rm -rf mmdetection3d
+git clone https://github.com/open-mmlab/mmdetection3d.git mmdetection3d
+cd mmdetection3d
+git checkout v0.17.1
+
+export FORCE_CUDA="1"
+export MMCV_WITH_OPS="1"
+export TORCH_CUDA_ARCH_LIST="9.0"
+export CUDA_HOME=/usr/local/cuda
+export CPATH=/usr/local/cuda/include:$CPATH
+
+pip install --no-cache-dir --force-reinstall mmcv-full==1.7.2
+
+find mmdet3d/ops/ -type f -exec sed -i 's/#include <THC\/THC.h>/#include <ATen\/cuda\/CUDAContext.h>/g' {} +
+find mmdet3d/ops/ -type f -exec sed -i 's/extern THCState \*state;//g' {} +
+find mmdet3d/ops/ -type f -exec sed -i 's/THCState_getCurrentStream(state)/at::cuda::getCurrentCUDAStream().stream()/g' {} +
+
+pip install . --no-deps
+
+sed -i 's/force=False/force=True/g' /usr/local/lib/python3.8/dist-packages/mmcv/utils/registry.py
+sed -i 's/mmcv_maximum_version = .*/mmcv_maximum_version = "1.8.0"/g' /usr/local/lib/python3.8/dist-packages/mmdet3d/__init__.py
+find /usr/local/lib/python3.8/dist-packages/mmdet3d/ -type f -name "*.py" -exec sed -i 's/numba.errors/numba.core.errors/g' {} +
+
+pip install "numpy<1.24" 
+pip install "scipy<1.9" "matplotlib<3.7" "Pillow<10.0.0"
+python -m pip install --no-cache-dir --force-reinstall 'git+https://github.com/facebookresearch/detectron2.git@v0.6'
+
+python -c '
+import os
+path = "/usr/local/lib/python3.8/dist-packages/detectron2/__init__.py"
+with open(path, "r") as f: data = f.read()
+with open(path, "w") as f: f.write("import PIL.Image\nfor k,v in {\"LINEAR\":2,\"BILINEAR\":2,\"CUBIC\":3,\"BICUBIC\":3,\"ANTIALIAS\":1,\"LANCZOS\":1,\"NEAREST\":0}.items():\n    if not hasattr(PIL.Image, k): setattr(PIL.Image, k, v)\n" + data)
+'
+
+# Setup BEVFormer
+cd /workspace/core_models/
+rm -rf BEVFormer
+git clone https://github.com/fundamentalvision/BEVFormer.git BEVFormer
+cd BEVFormer
+
+# Move staged files
+cp -r /workspace/temp_configs/* projects/configs/bevformer/
+cp /workspace/temp_test.py tools/test.py
+rm -rf /workspace/temp_configs /workspace/temp_test.py
+
+# Apply Code Fixes
+find /workspace/core_models/BEVFormer/ -type f -name "*.py" -exec sed -i "s/torch.meshgrid(\(.*\))/torch.meshgrid(\1, indexing='ij')/g" {} + || true
+sed -i 's/from tkinter.messagebox import NO/# from tkinter.messagebox import NO/g' projects/mmdet3d_plugin/bevformer/detectors/bevformer_fp16.py
+
+sed -i 's/from mmcv.runner import force_fp32, auto_fp16/from mmcv.runner import force_fp32, auto_fp16\nfrom torch.nn.parallel.distributed import DistributedDataParallel\nfrom mmcv.parallel.scatter_gather import scatter_kwargs\n\nclass MMDistributedDataParallel(DistributedDataParallel):\n    def train_step(self, *inputs, **kwargs):\n        if self.device_ids:\n            inputs, kwargs = scatter_kwargs(inputs, kwargs, self.device_ids, dim=self.dim)\n            return self.module.train_step(*inputs[0], **kwargs[0])\n        return self.module.train_step(*inputs, **kwargs)\n    def val_step(self, *inputs, **kwargs):\n        if self.device_ids:\n            inputs, kwargs = scatter_kwargs(inputs, kwargs, self.device_ids, dim=self.dim)\n            return self.module.val_step(*inputs[0], **kwargs[0])\n        return self.module.val_step(*inputs, **kwargs)/g' projects/mmdet3d_plugin/bevformer/detectors/bevformer_fp16.py
+
+pip install einops fvcore seaborn iopath==0.1.9 timm==0.6.13 pylint ipython==8.12 numba pandas pyquaternion shapely fire cachetools scikit-learn
+pip install lyft_dataset_sdk nuscenes-devkit plyfile networkx==2.2
+pip install "Pillow==9.5.0"
+EOF
+
+    # 3. Execute the script safely inside the container using the native fakeroot
+    chmod +x /workspace/build_script.sh
+    fakeroot /workspace/build_script.sh
