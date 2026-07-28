@@ -1,12 +1,13 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --gpus-per-node=A40:4       # Adjust based on what GPUs you want to use
+#SBATCH --partition=gpu
+#SBATCH --gpus-per-node=4
 #SBATCH --time=05:00:00             # Adjust time as needed
-#SBATCH --account=NAISS2026-4-688
+#SBATCH --account=naiss2026-4-688-gpu
 
 # --- UPDATE THESE TWO PATHS ---
-PROJECT_DIR="/mimer/NOBACKUP/groups/av-ood-benchmarking/seasonal-weather-ood/Weather_OOD_Analysis"
-CONTAINER="/mimer/NOBACKUP/groups/av-ood-benchmarking/seasonal-weather-ood/Weather_OOD_Analysis/bevformer_env.sif"
+PROJECT_DIR="/nobackup/proj/disk/av-ood-benchmarking/personal/seasonal-weather-ood/Weather_OOD_Analysis"
+CONTAINER="/nobackup/proj/disk/av-ood-benchmarking/personal/seasonal-weather-ood/Weather_OOD_Analysis/bevformer_native.sif"
 
 # 1. Define Master Variables
 export OOD_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
@@ -32,14 +33,23 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 1: Model Evaluation..."
     apptainer exec --nv \
         --bind $PROJECT_DIR/data:/workspace/data \
+        --bind $PROJECT_DIR/data/sets/nuscenes-c/nuScenes-c:/workspace/data/nuScenes-c \
+        --bind $PROJECT_DIR/data/sets/nuscenes:/workspace/data/nuscenes \
+        --bind $PROJECT_DIR/data/sets/nuscenes:/workspace/nuscenes:ro \
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
-        --bind $PROJECT_DIR/evaluation_results/.dist_test:/workspace/core_models/BEVFormer/.dist_test \
-        --bind $PROJECT_DIR/evaluation_results/:/workspace/core_models/BEVFormer/test \
-        --pwd /workspace/core_models/BEVFormer \
+        --bind $PROJECT_DIR/core_models/BEVFormer/.dist_test:/workspace/core_models/BEVFormer/.dist_test:rw \
+        --bind $PROJECT_DIR/evaluation_results:/workspace/test:rw \
+        --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$OOD_TIMESTAMP \
         $CONTAINER \
-        bash -c "PYTHONPATH=. ./tools/dist_test.sh projects/configs/bevformer/bevformer_base.py ckpts/bevformer_r101_dcn_24ep.pth 4 --eval bbox"  # Adjust the number of GPU according to how much allocation is made
+        torchrun --nproc_per_node=4 /workspace/core_models/BEVFormer/tools/test.py \
+            /workspace/core_models/BEVFormer/projects/configs/bevformer/bevformer_base.py \
+            /workspace/checkpoints/bevformer/bevformer_r101_dcn_24ep.pth \
+            --launcher pytorch \
+            --eval bbox \
+            --tmpdir /tmp/bevformer_eval
 
     # ---------------------------------------------------------
     # Step 2: Calculate Energy Scores
@@ -56,6 +66,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
         --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP \
         $CONTAINER \
         python safety_monitor/energy_score.py
@@ -77,6 +88,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
         --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
         $CONTAINER \
         python safety_monitor/mahalanobis.py
@@ -84,7 +96,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
     echo "Mahalanobis Distance (Raw) calculation complete!"
 
     # ---------------------------------------------------------
-    # Step 4: Calculate Raw Mahalanobis Distance
+    # Step 4: Calculate Normalized Mahalanobis Distance
     # ---------------------------------------------------------
     echo "[$OOD_WEATHER $OOD_SEVERITY] Running Step 4: (Normalized) Mahalanobis Distance..."
 
@@ -98,6 +110,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
         --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
         $CONTAINER \
         python safety_monitor/mahalanobis.py
@@ -114,6 +127,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
         --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
         $CONTAINER \
         python safety_monitor/auroc_evaluator.py
@@ -130,6 +144,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
         --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
         $CONTAINER \
         python safety_monitor/auroc_evaluator.py
@@ -146,6 +161,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
         --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=false \
         $CONTAINER \
         python safety_monitor/fpr95_evaluator.py
@@ -162,6 +178,7 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
         --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID,NORMALIZATION=true \
         $CONTAINER \
         python safety_monitor/fpr95_evaluator.py
@@ -178,8 +195,8 @@ for CURRENT_WEATHER in "${WEATHERS[@]}"; do
         --bind $PROJECT_DIR/checkpoints:/workspace/checkpoints \
         --bind $PROJECT_DIR/plots:/workspace/plots \
         --bind $PROJECT_DIR/evaluation_results/:/workspace/core_models/BEVFormer/test \
-        --bind $PROJECT_DIR/safety_monitor:/workspace/safety_monitor \
         --pwd /workspace \
+        --env PYTHONPATH="/workspace/core_models/BEVFormer" \
         --env OOD_WEATHER=$OOD_WEATHER,OOD_SEVERITY=$OOD_SEVERITY,OOD_TIMESTAMP=$ACTUAL_TIMESTAMP,BASELINE_TIMESTAMP=$BASELINE_ID \
         $CONTAINER \
         python safety_monitor/risk_coverage_evaluator.py
