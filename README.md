@@ -663,14 +663,18 @@ This will output the final evaluated `.png` plots to `plots/fpr95/{OOD_WEATHER}/
 >  - For `OOD_TIMESTAMP`, please check what timestap you will use from `data/intercepted_feature_logits/{target_folder}/{timestamp}`
 > - For `BASELINE_TIMESTAMP`, please check what timestamp is used under `data/mahalanobis_distances/nuscenes/{timestamp}`
 
-## Docker Workflow
+## Apptainer Workflow
 This project uses a fully independent, containerized environment to ensure 100% reproducibility across different compute nodes. The container securely houses all core models (BEVFormer, mmdetection3d) and evaluation scripts.
 
-To use docker, pull the image in the root:
+If you do not have the `bevformer_native.sif` in your root directory, run the following:
 ```bash
-apptainer pull bevformer_env.sif docker://ghcr.io/nadmanfaisal/ood-analysis:v1
+sbatch build.sh
 ```
-This will generate a `bevformer_eval.sif` file that will be used for pipeline run
+> [!WARNING]
+> Running this will also delete any previous instances of `bevformer_native.sif` in the root.
+
+This creates a `bevformer_native.sif` file in your root, which is essentially the container that holds our evaluation artifact.
+
 ### Understanding the `run_pipeline.sh`
 Before submitting the job, open run_pipeline.sh and update the following variables to match your specific environment:
 - Slurm Settings: Update `#SBATCH --account=NAISS...` with your active compute allocation ID, and adjust the `--gpus-per-node` if needed.
