@@ -15,7 +15,7 @@ This ensures seamless compatibility with BEVFormer and BEVFusion data loaders
 for post-hoc OOD robustness benchmarking while preventing massive data duplication.
 
 NOTE 1: This file explicitly excludes symlinking to corrupted LIDAR_TOP data 
-(data/sets/nuscenes-c/nuScenes-C/samples/*), as it is not required for the 
+(data/sets/nuscenes-automold/samples/*), as it is not required for the 
 BEVFormer architecture's vision-only processing pipeline.
 
 NOTE 2: This file explicitly excludes symlinking to historical sweep data (`sweeps/`) 
@@ -37,7 +37,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(script_dir)
 
 clean_dir = os.path.join(root_dir, "data", "sets", "nuscenes")
-corrupt_dir = os.path.join(root_dir, "data", "sets", "nuscenes-c", "nuScenes-c")
+corrupt_dir = os.path.join(root_dir, "data", "sets", "nuscenes-automold")
 
 for corruption in os.listdir(corrupt_dir):
     corruption_path = os.path.join(corrupt_dir, corruption)
