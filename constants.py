@@ -79,6 +79,18 @@ OUTPUT_PKL_PATHS = [
     'data/sets/nuscenes-c/nuScenes-c/Snow/hard/nuscenes_infos_temporal_val.pkl',
 ]
 
+AUTOMOLD_OUTPUT_PKL_PATHS = [
+    #Fog
+    'data/sets/nuscenes-automold/Fog/easy/nuscenes_infos_temporal_val.pkl',
+    'data/sets/nuscenes-automold/Fog/mid/nuscenes_infos_temporal_val.pkl',
+    'data/sets/nuscenes-automold/Fog/hard/nuscenes_infos_temporal_val.pkl',
+
+    #Snow
+    'data/sets/nuscenes-automold/Snow/easy/nuscenes_infos_temporal_val.pkl',
+    'data/sets/nuscenes-automold/Snow/mid/nuscenes_infos_temporal_val.pkl',
+    'data/sets/nuscenes-automold/Snow/hard/nuscenes_infos_temporal_val.pkl',
+]
+
 # Logits
 FEATURE_LOGIT_OUTPUT = 'data/intercepted_feature_logits'
 
