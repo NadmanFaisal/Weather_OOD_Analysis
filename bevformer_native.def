@@ -97,6 +97,7 @@ sed -i 's/from mmcv.runner import force_fp32, auto_fp16/from mmcv.runner import 
 pip install einops fvcore seaborn iopath==0.1.9 timm==0.6.13 pylint ipython==8.12 numba pandas pyquaternion shapely fire cachetools scikit-learn
 pip install lyft_dataset_sdk nuscenes-devkit plyfile networkx==2.2
 pip install "Pillow==9.5.0"
+pip install opencv-python
 EOF
 
     # 3. Execute the script safely inside the container using the native fakeroot

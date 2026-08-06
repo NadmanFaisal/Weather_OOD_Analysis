@@ -12,7 +12,7 @@ import Automold as am
 # Gets the project directory's name
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from constants import OUTPUT_DIR, REGION, FILES
+from constants import OUTPUT_DIR
 
 ROOT_DIR = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
