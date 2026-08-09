@@ -57,6 +57,7 @@ for output_path in OUTPUT_PKL_PATHS:
         severity = p.parent.name
         weather = p.parent.parent.name
 
+        # The target str that is replaced into the pkl file to point to the right files
         target_str = f'./data/nuScenes-c/{weather}/{severity}'
         print(f"\nPatching metadata for {weather} ({severity})...")
 

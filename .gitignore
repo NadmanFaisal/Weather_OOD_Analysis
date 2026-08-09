@@ -67,3 +67,6 @@ safety_monitor/__pycache__
 
 # Apptainer files
 bevformer_env.sif
+
+# Evaluation
+evaluation_results/bevformer_base/*

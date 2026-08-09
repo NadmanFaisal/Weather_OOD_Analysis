@@ -25,7 +25,10 @@ recurrent memory relies strictly on corrupted OOD keyframes.
 
 import os
 import shutil
+import sys
 
+# Gets the project directory's name
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import CORE_NUSCENES_FOLDER
 
 print("Building Shadow Directories for BEVFormer (Relative Paths)...")
